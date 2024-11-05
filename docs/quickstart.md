@@ -9,19 +9,19 @@ quick-setup是一个二进制可执行文件，从[github release](https://githu
 ### 墙外安装
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/yuanboshe/quick-setup/devel/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/yuanboshe/quick-setup/master/scripts/install.sh | bash
 ```
 
 ### 墙内指定代理安装
 
 ```bash
-PROXY=https://ghp.ci/; curl -sSL "${PROXY}https://raw.githubusercontent.com/yuanboshe/quick-setup/devel/scripts/install.sh" | bash -s -- "$PROXY"
+PROXY=https://ghp.ci/ && curl -sSL "${PROXY}https://raw.githubusercontent.com/yuanboshe/quick-setup/master/scripts/install.sh" | bash -s -- "$PROXY"
 ```
 
 ### 自行判断是墙外还是墙内安装
 
 ```bash
-PROXY=$(curl -s -I -m 5 https://www.google.com >/dev/null 2>&1 && echo "" || echo "https://ghp.ci/"); curl -sSL "${PROXY}https://raw.githubusercontent.com/yuanboshe/quick-setup/devel/scripts/install.sh" | bash -s -- "$PROXY"
+PROXY=$(curl -s -I -m 5 https://www.google.com >/dev/null 2>&1 && echo "" || echo "https://ghp.ci/") && curl -sSL "${PROXY}https://raw.githubusercontent.com/yuanboshe/quick-setup/master/scripts/install.sh" | bash -s -- "$PROXY"
 ```
 
 ### 验证
@@ -50,16 +50,16 @@ qs -e .
 example-repo的目录结构及说明如下：
 
 ```bash
-example-repo          # 组件库
-  ├── component1      # 组件
-  │   ├── bye.sh      # 功能模板
-  │   ├── config.yaml # 默认配置
-  │   └── hello.sh
-  ├── component2
-  │   ├── config.yaml
-  │   └── showtime.sh
-  ├── config.yaml     # 菜单（配置）
-  └── framework.sh    # 框架模板
+example-repo        # 组件库
+├── component1      # 组件
+│   ├── bye.sh      # 功能模板
+│   ├── config.yaml # 默认配置
+│   └── hello.sh
+├── component2
+│   ├── config.yaml
+│   └── showtime.sh
+├── config.yaml     # 菜单（配置）
+└── framework.sh    # 框架模板
 ```
 
 基本的组件库包含组件、功能模板、默认配置三部分。而example-repo中的菜单和框架模板可以放在任何地方，不是组件库的必须组成部分，放在这里只是提供参考。
