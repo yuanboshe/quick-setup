@@ -52,14 +52,11 @@ example-repo的目录结构及说明如下：
 ```bash
 example-repo        # 组件库
 ├── component1      # 组件
-│   ├── bye.sh      # 功能模板
-│   ├── config.yaml # 默认配置
+│   ├── bye.sh      # 功能脚本
 │   └── hello.sh
 ├── component2
-│   ├── config.yaml
 │   └── showtime.sh
-├── config.yaml     # 菜单（配置）
-└── framework.sh    # 框架模板
+└── config.yaml     # 菜单配置
 ```
 
 基本的组件库包含组件、功能模板、默认配置三部分。而example-repo中的菜单和框架模板可以放在任何地方，不是组件库的必须组成部分，放在这里只是提供参考。
