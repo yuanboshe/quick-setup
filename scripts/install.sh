@@ -9,6 +9,9 @@ INSTALL_DIR="${QS_INSTALL_DIR:-/usr/local/bin}"
 CURL_CONNECT_TIMEOUT="${QS_CURL_CONNECT_TIMEOUT:-8}"
 CURL_MAX_TIME="${QS_CURL_MAX_TIME:-120}"
 CURL_RETRY="${QS_CURL_RETRY:-2}"
+# 发布方可以在这里填入默认镜像或 GHX 转发入口，多个值用空格或逗号分隔。
+DEFAULT_RELEASE_BASE_URLS=""
+DEFAULT_GHX_BASE_URLS=""
 
 urlencode() {
     local raw="$1"
@@ -57,29 +60,56 @@ download_one() {
         "${url}"
 }
 
+append_url_list() {
+    local list="$1"
+    local -n output_ref="$2"
+    local item
+    list="${list//,/ }"
+    for item in ${list}; do
+        if [ -n "${item}" ]; then
+            output_ref+=("${item}")
+        fi
+    done
+}
+
 download_asset() {
     local asset="$1"
     local output="$2"
     local upstream="${BASE_URL}${asset}"
     local url
+    local base
+    local release_base_urls=()
+    local ghx_base_urls=()
 
     if [ -n "${QS_RELEASE_BASE_URL:-}" ]; then
-        url="${QS_RELEASE_BASE_URL%/}/${asset}"
+        release_base_urls+=("${QS_RELEASE_BASE_URL}")
+    fi
+    append_url_list "${QS_RELEASE_BASE_URLS:-}" release_base_urls
+    append_url_list "${DEFAULT_RELEASE_BASE_URLS}" release_base_urls
+
+    if [ -n "${QS_GHX_BASE_URL:-}" ]; then
+        ghx_base_urls+=("${QS_GHX_BASE_URL}")
+    fi
+    append_url_list "${QS_GHX_BASE_URLS:-}" ghx_base_urls
+    append_url_list "${DEFAULT_GHX_BASE_URLS}" ghx_base_urls
+
+    for base in "${release_base_urls[@]}"; do
+        url="${base%/}/${asset}"
         echo "Download ${asset} from ${url} ..."
         if download_one "${url}" "${output}"; then
             return 0
         fi
         echo "Download failed: ${url}" >&2
-    fi
+    done
 
-    if [ -n "${QS_GHX_BASE_URL:-}" ]; then
-        url="$(ghx_proxy_url "${QS_GHX_BASE_URL}" "${upstream}")"
-        echo "Download ${asset} through GHX proxy ${QS_GHX_BASE_URL} ..."
+    for base in "${ghx_base_urls[@]}"; do
+        url="$(ghx_proxy_url "${base}" "${upstream}")"
+        echo "Download ${asset} through GHX proxy ${base} ..."
         if download_one "${url}" "${output}" "ghx"; then
             return 0
         fi
-        echo "Download failed through GHX proxy: ${QS_GHX_BASE_URL}" >&2
-    fi
+        echo "Download failed through GHX proxy: ${base}" >&2
+    done
 
     if [ -n "${PROXY}" ]; then
         url="${PROXY}${upstream}"
@@ -96,7 +126,7 @@ download_asset() {
     fi
 
     echo "Failed to download ${asset}." >&2
-    echo "If GitHub is unreachable, set QS_GHX_BASE_URL or QS_RELEASE_BASE_URL and retry." >&2
+    echo "If GitHub is unreachable, set QS_GHX_BASE_URL, QS_GHX_BASE_URLS, QS_RELEASE_BASE_URL or QS_RELEASE_BASE_URLS and retry." >&2
     return 1
 }
 

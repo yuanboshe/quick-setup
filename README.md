@@ -55,6 +55,6 @@ npm run docs:preview
 
 `docs/public/install.sh` 和 `docs/public/skills/` 由 `npm run sync-public` 从上述真源生成，用于 GitHub Pages 静态发布，不作为可手工维护的事实源提交。
 
-安装脚本默认从 GitHub Release 下载资产，并设置 curl 超时和重试。GitHub 不稳定时，可以通过 `QS_GHX_BASE_URL` 使用 GHX 兼容转发服务，或通过 `QS_RELEASE_BASE_URL` 指向自建 Release 镜像。
+安装脚本默认从 GitHub Release 下载资产，并设置 curl 超时和重试。发布方可以在脚本中内置 GHX Worker、自建转发服务或 Release 镜像；自建转发服务面向公开安装脚本时应只对白名单 release 资产免 token，不应开放通用免 token 转发。
 
 更新版本时，需要同步检查 GitHub Release 资产、`SHA256SUMS`、`scripts/install.sh` 中的版本号、下载说明页和 skill 说明页。
