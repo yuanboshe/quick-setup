@@ -41,7 +41,7 @@ curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URL="https://ghx-cache.pz
 curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URLS="https://ghx-cache.pz1.top,https://ghx.pz1.top" bash
 ```
 
-不建议在公开安装命令里携带自建转发 token。更好的方式是在自建转发服务端只对 QS 安装所需的公开 release 资产设置免 token 白名单，其他 GitHub URL 仍然要求 token。
+不建议在公开安装命令里携带自建转发 token。更好的方式是在自建转发服务端设置公开 owner 白名单，例如 `yuanboshe,hog,aicrobo`；这些 owner 下的 GitHub 资源可以免 token，其他 GitHub owner 仍然要求 token。
 
 如果你已经把 Release 资产同步到自己的镜像目录，设置 `QS_RELEASE_BASE_URL`。该目录下需要包含 `qs-linux-amd64`、`qs-linux-arm64` 和 `SHA256SUMS` 等文件。
 
