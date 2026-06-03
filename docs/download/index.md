@@ -27,7 +27,27 @@ Release 页面包含 Linux、macOS、Windows 的 `amd64` / `arm64` 二进制，�
 curl -fsSL https://qs.pz1.top/install.sh | bash
 ```
 
-如果下载 GitHub Release 需要代理前缀，把前缀作为第一个参数传入。脚本会把该前缀拼接到 Release 资产 URL 前面。
+安装脚本会为下载请求设置连接超时、总超时和重试，避免 GitHub 无法访问时长时间卡住。
+
+如果你有 GHX 兼容转发服务或 Cloudflare Worker，设置 `QS_GHX_BASE_URL`。转发入口格式应为 `<base>?url=<escaped GitHub URL>`。
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URL="https://ghx-cache.example.com/" bash
+```
+
+如果转发服务需要 token：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URL="https://ghx-cache.example.com/" QS_GHX_TOKEN="<token>" bash
+```
+
+如果你已经把 Release 资产同步到自己的镜像目录，设置 `QS_RELEASE_BASE_URL`。该目录下需要包含 `qs-linux-amd64`、`qs-linux-arm64` 和 `SHA256SUMS` 等文件。
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_RELEASE_BASE_URL="https://mirror.example.com/quick-setup/v0.3.0/" bash
+```
+
+仍然可以使用旧的代理前缀参数。脚本会把该前缀拼接到 GitHub Release 资产 URL 前面。
 
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | bash -s -- https://example-proxy/
