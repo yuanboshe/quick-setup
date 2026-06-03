@@ -27,18 +27,18 @@ Release 页面包含 Linux、macOS、Windows 的 `amd64` / `arm64` 二进制，�
 curl -fsSL https://qs.pz1.top/install.sh | bash
 ```
 
-安装脚本会为下载请求设置连接超时、总超时和重试，避免 GitHub 无法访问时长时间卡住。发布方可以在脚本中内置 GHX Worker、自建转发服务或 Release 镜像；配置后，用户不需要额外传参数。
+安装脚本会为下载请求设置连接超时、总超时和重试，避免 GitHub 无法访问时长时间卡住。当前脚本默认会按顺序尝试 GHX Worker `https://ghx-cache.pz1.top`、自建转发 `https://ghx.pz1.top` 和官方 GitHub。
 
 如果你在测试自己的 GHX 兼容转发服务或 Cloudflare Worker，可以临时设置 `QS_GHX_BASE_URL`。转发入口格式应为 `<base>?url=<escaped GitHub URL>`。
 
 ```sh
-curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URL="https://ghx-cache.example.com/" bash
+curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URL="https://ghx-cache.pz1.top" bash
 ```
 
 多个转发入口可以用空格或逗号传给 `QS_GHX_BASE_URLS`，脚本会按顺序尝试：
 
 ```sh
-curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URLS="https://worker.example.com/,https://ghx-cache.example.com/" bash
+curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URLS="https://ghx-cache.pz1.top,https://ghx.pz1.top" bash
 ```
 
 不建议在公开安装命令里携带自建转发 token。更好的方式是在自建转发服务端只对 QS 安装所需的公开 release 资产设置免 token 白名单，其他 GitHub URL 仍然要求 token。

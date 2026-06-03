@@ -11,7 +11,7 @@ CURL_MAX_TIME="${QS_CURL_MAX_TIME:-120}"
 CURL_RETRY="${QS_CURL_RETRY:-2}"
 # 发布方可以在这里填入默认镜像或 GHX 转发入口，多个值用空格或逗号分隔。
 DEFAULT_RELEASE_BASE_URLS=""
-DEFAULT_GHX_BASE_URLS=""
+DEFAULT_GHX_BASE_URLS="https://ghx-cache.pz1.top https://ghx.pz1.top"
 
 urlencode() {
     local raw="$1"
