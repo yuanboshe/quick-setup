@@ -34,6 +34,24 @@ curl -fsSL https://qs.pz1.top/install.sh | bash
 curl -fsSL https://qs.pz1.top/install.sh | QS_INSTALL_COMPLETION=false bash
 ```
 
+安装脚本默认也会安装 QS Agent skills 到 `${AGENTS_HOME:-~/.agents}/skills`，用于让 Agent 了解 QS 命令和组件库规范。检测到 Codex 或 Claude 的用户目录时，脚本会在对应 agent 的 skills 目录里创建引用；Windows 下会优先使用目录 junction。需要关闭 skill 安装时：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_INSTALL_SKILLS=false bash
+```
+
+需要指定 skill 安装目录时：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_SKILLS_DIR="/path/to/skills" bash
+```
+
+需要关闭自动 agent 目录引用时：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_AGENT_SKILL_LINKS=false bash
+```
+
 如果你在测试自己的 GHX 兼容转发服务或 Cloudflare Worker，可以设置 `QS_GHX_BASE_URL`。转发入口格式应为 `<base>?url=<escaped GitHub URL>`。
 
 ```sh

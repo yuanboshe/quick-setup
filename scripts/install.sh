@@ -12,6 +12,11 @@ CURL_RETRY="${QS_CURL_RETRY:-2}"
 DEFAULT_RELEASE_BASE_URLS=""
 DEFAULT_GHX_BASE_URLS="https://ghx-cache.pz1.top https://ghx.pz1.top"
 INSTALL_COMPLETION="${QS_INSTALL_COMPLETION:-true}"
+INSTALL_SKILLS="${QS_INSTALL_SKILLS:-true}"
+SKILL_BASE_URL="${QS_SKILL_BASE_URL:-https://qs.pz1.top/skills}"
+AGENTS_HOME="${AGENTS_HOME:-${HOME}/.agents}"
+SKILLS_DIR="${QS_SKILLS_DIR:-${AGENTS_HOME}/skills}"
+AGENT_SKILL_LINKS="${QS_AGENT_SKILL_LINKS:-auto}"
 
 urlencode() {
     local raw="$1"
@@ -207,6 +212,132 @@ install_completion() {
     print_completion_next_steps "${user_completion_file}"
 }
 
+install_skill() {
+    local skill_name="$1"
+    local skill_url="${SKILL_BASE_URL%/}/${skill_name}/SKILL.md"
+    local skill_dir="${SKILLS_DIR}/${skill_name}"
+    local skill_tmp="${TMP_DIR}/${skill_name}.SKILL.md"
+
+    echo "Install Agent skill ${skill_name} from ${skill_url} ..."
+    if ! download_one "${skill_url}" "${skill_tmp}"; then
+        echo "Skip Agent skill ${skill_name}: download failed."
+        return 0
+    fi
+
+    if ! mkdir -p "${skill_dir}" 2>/dev/null; then
+        echo "Skip Agent skill ${skill_name}: cannot create ${skill_dir}."
+        return 0
+    fi
+
+    if ! cp "${skill_tmp}" "${skill_dir}/SKILL.md" 2>/dev/null; then
+        echo "Skip Agent skill ${skill_name}: cannot write ${skill_dir}/SKILL.md."
+        return 0
+    fi
+    echo "Agent skill ${skill_name} has been installed to ${skill_dir}/SKILL.md"
+}
+
+append_unique_dir() {
+    local dir="$1"
+    local existing
+
+    if [ -z "${dir}" ]; then
+        return 0
+    fi
+    for existing in "${DETECTED_AGENT_SKILL_DIRS[@]}"; do
+        if [ "${existing}" = "${dir}" ]; then
+            return 0
+        fi
+    done
+    DETECTED_AGENT_SKILL_DIRS+=("${dir}")
+}
+
+detect_agent_skill_dirs() {
+    DETECTED_AGENT_SKILL_DIRS=()
+
+    if [ "${AGENT_SKILL_LINKS}" = "false" ] || [ "${AGENT_SKILL_LINKS}" = "0" ]; then
+        return 0
+    fi
+
+    if [ "${AGENT_SKILL_LINKS}" != "auto" ]; then
+        local links="${AGENT_SKILL_LINKS//,/ }"
+        local dir
+        for dir in ${links}; do
+            append_unique_dir "${dir}"
+        done
+        return 0
+    fi
+
+    if [ -n "${CODEX_HOME:-}" ]; then
+        append_unique_dir "${CODEX_HOME}/skills"
+    elif [ -d "${HOME}/.codex" ]; then
+        append_unique_dir "${HOME}/.codex/skills"
+    fi
+
+    if [ -n "${CLAUDE_HOME:-}" ]; then
+        append_unique_dir "${CLAUDE_HOME}/skills"
+    elif [ -d "${HOME}/.claude" ]; then
+        append_unique_dir "${HOME}/.claude/skills"
+    fi
+}
+
+link_installed_skill() {
+    local skill_name="$1"
+    local source_dir="${SKILLS_DIR}/${skill_name}"
+    local target_base
+    local target_dir
+    local source_win
+    local target_win
+
+    if [ ! -f "${source_dir}/SKILL.md" ]; then
+        return 0
+    fi
+
+    for target_base in "${DETECTED_AGENT_SKILL_DIRS[@]}"; do
+        target_dir="${target_base}/${skill_name}"
+        if [ "${target_dir}" = "${source_dir}" ]; then
+            continue
+        fi
+        mkdir -p "${target_base}" 2>/dev/null || {
+            echo "Skip Agent skill reference ${target_dir}: cannot create ${target_base}."
+            continue
+        }
+        if [ -L "${target_dir}" ]; then
+            rm "${target_dir}" 2>/dev/null || {
+                echo "Skip Agent skill reference ${target_dir}: cannot replace existing path."
+                continue
+            }
+        elif [ -e "${target_dir}" ]; then
+            echo "Skip Agent skill reference ${target_dir}: path already exists."
+            continue
+        fi
+        if [ "${OS}" = "windows" ] && command -v cmd.exe >/dev/null 2>&1 && command -v cygpath >/dev/null 2>&1; then
+            source_win="$(cygpath -aw "${source_dir}")"
+            target_win="$(cygpath -aw "${target_dir}")"
+            if MSYS2_ARG_CONV_EXCL='*' cmd.exe /c mklink /J "${target_win}" "${source_win}" >/dev/null 2>&1; then
+                echo "Agent skill ${skill_name} has been linked to ${target_dir}"
+            else
+                echo "Skip Agent skill reference ${target_dir}: cannot create link."
+            fi
+        elif ln -s "${source_dir}" "${target_dir}" 2>/dev/null; then
+            echo "Agent skill ${skill_name} has been linked to ${target_dir}"
+        else
+            echo "Skip Agent skill reference ${target_dir}: cannot create link."
+        fi
+    done
+}
+
+install_skills() {
+    if [ "${INSTALL_SKILLS}" = "false" ] || [ "${INSTALL_SKILLS}" = "0" ]; then
+        return 0
+    fi
+
+    detect_agent_skill_dirs
+    install_skill "qs-command"
+    link_installed_skill "qs-command"
+    install_skill "qs-repo"
+    link_installed_skill "qs-repo"
+}
+
 ARCH="$(uname -m)"
 case "${ARCH}" in
     x86_64|amd64)
@@ -287,6 +418,7 @@ fi
 
 echo "qs has been installed to ${INSTALL_DIR}/${INSTALL_NAME}"
 install_completion
+install_skills
 case ":${PATH}:" in
     *":${INSTALL_DIR}:"*)
         ;;

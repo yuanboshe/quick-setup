@@ -2,6 +2,8 @@
 
 当前发布两个 quick-setup Agent skill。skill 真源放在仓库一级目录 `skills/` 下，方便从 GitHub 项目首页直接发现；文档站构建时会从该目录生成 raw 下载文件。
 
+默认安装脚本会把这些 skill 安装到 `${AGENTS_HOME:-~/.agents}/skills`，并在检测到 Codex 或 Claude 用户目录时创建引用。Windows 下会优先使用目录 junction。需要跳过时，在安装 QS 时设置 `QS_INSTALL_SKILLS=false`。
+
 仓库入口：
 
 ```text
