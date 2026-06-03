@@ -163,7 +163,7 @@ qs version
 导出内置示例仓库：
 
 ```sh
-qs export-example ./_tmp
+qs export-example ./demo
 ```
 
 启动本地 HTTP demo server：
