@@ -1,0 +1,19 @@
+{
+  "name": "qs-docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync-public": "node scripts/sync-public-assets.mjs",
+    "dev": "npm run sync-public && vitepress dev docs",
+    "build": "npm run sync-public && vitepress build docs",
+    "preview": "vitepress preview docs",
+    "docs:dev": "npm run dev",
+    "docs:build": "npm run build",
+    "docs:preview": "npm run preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4",
+    "vitepress-theme-teek": "^1.6.0"
+  }
+}

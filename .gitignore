@@ -1,1 +1,7 @@
 output/
+node_modules/
+docs/.vitepress/.temp/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+docs/public/install.sh
+docs/public/skills/

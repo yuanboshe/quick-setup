@@ -1,114 +1,165 @@
-# 相关概念
+# 核心概念
 
-我们以example-repo为例子介绍相关概念：
+QS 的心智模型是：
 
-```bash
-example-repo        # 组件库
-├── component1      # 组件
-│   ├── bye.sh      # 功能脚本
-│   ├── config.yaml # 组件配置
-│   └── hello.sh
-├── component2
-│   └── showtime.sh
-├── config.yaml     # 菜单配置
-└── framework.sh    # 框架模板
+```text
+repo 提供组件库
+component 负责分类
+template 是可复用功能脚本
+recipe 选择 template 并设置参数
+framework 决定最终脚本外层结构
 ```
 
-## 功能脚本
+这套模型的目标是把可复用 shell 操作拆清楚：template 保持普通脚本可读，recipe 只描述本次要组合什么，framework 只负责最终脚本的组织方式。
 
-功能脚本指完成某项特定功能的脚本，比如安装docker、修改更新源、测试多个镜像地址的连接速度等。如下面的例子 *hello.sh*：
+## recipe
 
-```bash
-#!/bin/bash
-
-# @arg this is the description of arg
-NAME="default name"
-
-# main
-echo "hello [${NAME}]"
-```
-
-## 组件配置（非必须）
-
-每个组件可以有自己的配置文件（也可以没有），默认名字为 *config.yaml* ，主要是为以后拓展组件的功能（目前只能向功能脚本注入默认变量值）。
-
-例如：
+`recipe` 是 QS 的入口配置资产。默认入口文件名是 `recipe.yaml`。
 
 ```yaml
-arg:
-  name: my component name in component file
-```
-
-`qs`命令会将配置文件下 *arg* 里面的变量 *name* 注入到功能脚本内，即用 `arg.name` 的值替代前面 *hello.sh* 脚本中的 `NAME` 的值。
-
-注意：配置文件中的变量名必须全部小写，匹配功能脚本中任意大小写的变量名，即 `name` 可以匹配 `NAME`, `Name`, `nAmE`等，在功能脚本中通过添加 `# @arg` 头，表示改变量的值可以被配置文件中的值替代。
-
-在上面的例子中，`arg` 下面的变量对组件下所有的功能脚本都生效，如果只希望对 *hello.sh* 脚本生效，可以写成：
-
-```yaml
-arg/hello.sh:
-  name: my template name in component file
-```
-
-这里脚本级的配置变量会覆盖前面组件级的配置变量，两者都会生效，只是会有同名覆盖。
-
-## 框架模板
-
-框架模板是最终应用脚本的框架，功能脚本会依次被注入框架模板内。框架模板是写得简单还是复杂，以及如何组织功能脚本，由设计者自己定义。
-
-例如下面的简单框架模板：
-
-```bash
-#!/bin/bash
-
-echo "==================== Start ===================="
-{{range $index, $template := .templates}}
-echo "-------------------- template {{$template.templateId}} --------------------"
-{{$template.content}}
-{{- end}}
-echo "==================== End ===================="
-echo "All works finished!"
-```
-
-其中`.templates`是功能脚本的有序列表，每个template都包含`templateId`（/组件仓库名/组件名/功能脚本名）和`content`功能脚本内容。
-
-## 组件
-
-组件就是包含一个或者多个功能脚本，组件配置文件的文件夹，文件夹的名字就是组件的名字。
-
-组件是一个分类的概念，具体如何分类完全由功能脚本的维护者自行决定。
-
-## 组件库
-
-组件库是包含一个或者多个组件的文件夹（可以只包含组件而不需要任何其他文件），是比组件更高一级的分类，Git版本管理是以组件库为单位进行管理的。
-
-## 菜单配置
-
-“菜单”是yaml格式的配置文件，quick-setup跟进菜单的配置来生成最终的应用脚本。
-
-典型的菜单配置文件及参数说明如下：
-
-```bash
 qs:
   repos:
     - path: .
       name: repo-name
+  framework: framework.sh
   templates:
-    - repo-name/component1/hello.sh
-    - component2/showtime.sh
-    - component1/bye.sh
+    - repo-name/component1_simple/hello.sh
+    - component2_config_file/showtime.sh
+    - component3_multi_files/hello.sh
+    - bye.sh
 
-repo-name/component1:
-  name: my component name in cookbook file
-
-repo-name/component1/hello.sh:
-  name: my template name in cookbook file
+repo-name/component3_multi_files/hello.sh:
+  name: 用户参数
 ```
 
-`qs.repos`表示需要引用的组件库列表。其中`path`是组件库的本地地址，可以是绝对路径，也可以是相对路径（相对菜单）；`name`是组件库的别名，后面会用来做引用标识。
-`qs.framework`表示使用的框架模板文件路径，可以是绝对路径，也可以是相对路径（相对菜单），还可以是相对组件库（用别名标识）下的路径。如`repo-name/framework.sh`表示repo-name组件库下的framework.sh文件。并且，`qs.framework`参数不是必须，可以为空，如果工具找不到配置的框架模板，就会使用代码空间内置的框架模板。
-`qs.templates`表示功能脚本的列表，这是一个有序的string列表，工具会依照这个顺序组装最终的应用脚本。列表内容就是功能脚本的ID（“组件库名/组件名/功能脚本名”），然而，在填写时为了方便，只有第一个功能脚本ID需要写全，如果接下来的功能脚本和上一个具有相同的“组件库名”或者“组件名”，都可以省略掉，工具会自行补全。
+核心字段：
 
-如果需要修改功能脚本的变量，可以直接在下面添加要覆盖的变量，格式是以功能脚本ID（“组件库名/组件名/功能脚本名”）起头，后接变量名和变量值。当然，也可以添加针对组件所有功能脚本的变量，格式是以组件ID（“组件库名/组件名”）起头，后接变量名和变量值。
+- `qs.repos[].path`：组件库路径，可以是本地路径或 `git+` Git source。
+- `qs.repos[].name`：repo 逻辑名称，可省略；QS 会从路径推断。
+- `qs.framework`：framework 文件，可省略；省略时使用内置默认 framework。
+- `qs.templates`：本次选择的 template 列表，是必填字段。
 
-菜单的作用，就像客户点菜一样，在“菜单”上勾出自己需要的菜品，标记做成什么味道，然后下单即可。quick-setup工具最基本的用法，就是`qs </the/config-file/path/filename.yaml>`，即命令+菜单，quick-setup会根据菜单生成最终的应用脚本。
+recipe 中的参数覆盖只覆盖已声明参数。参数必须来自 template 路径上的 `config.yaml.args`，或 template 文件中的 `# @arg` 标记。
+
+## repo
+
+`repo` 是组件库，也是 Git 管理、发布、复用和信任边界。一个最小 repo 可以只包含 component 和 template：
+
+```text
+qs-repo/
+  docker/
+    install_docker.sh
+  golang/
+    install_go.sh
+```
+
+repo 根目录可以放示例 `recipe.yaml`、`framework.sh` 和默认上下文 `config.yaml`，但它们不是每个组件库的必需文件。
+
+## component
+
+`component` 是 repo 里的分类目录。分类方式由维护者决定，可以按技术栈、系统能力、安装目标或场景划分。
+
+```text
+qs-repo/
+  docker/
+  nodejs/
+  server_init/
+```
+
+component 可以继续包含多级目录。template ID 会保留这些目录层级。
+
+## template
+
+`template` 是具体功能脚本，通常是 `.sh` 文件。它应该表达一个清晰功能意图，例如安装 Docker、配置 Go、修改源、验证环境或输出诊断信息。
+
+```sh
+#!/bin/bash
+
+# @description 打印问候信息
+# @arg 名称
+NAME="默认值"
+
+main() {
+  echo "hello [${NAME}]"
+}
+
+main
+```
+
+QS 通过 shell 注释里的 `# @` 标记读取说明、参数和元数据。template 本身仍然是普通 shell 脚本，应该能被人类直接审查。
+
+## template config
+
+`config.yaml` 固定表示 repo 或 template 目录中的默认上下文文件。它包含 `args` 和 `metadata` 两个块。
+
+```yaml
+args:
+  version: latest
+  mirror: auto
+
+metadata:
+  platform:
+    - linux/ubuntu>=20.04
+  shell: bash
+  effects:
+    - package-install
+```
+
+QS 会从 repo 根目录开始，沿 template 路径逐级读取 `config.yaml`。越靠近 template 的目录覆盖越上层目录。
+
+## framework
+
+`framework` 是最终脚本外层模板，使用 Go `text/template` 渲染。它接收已渲染的 template 列表，把它们组织成最终 shell 脚本。
+
+::: v-pre
+```sh
+#!/bin/bash
+
+{{range $template := .templates}}
+echo "-------------------- template {{$template.templateId}} --------------------"
+{{$template.content}}
+{{end}}
+```
+:::
+
+framework 可以统一添加 header、错误处理、分隔输出或执行包装，但不应承载具体安装逻辑。
+
+## 生成计划
+
+`qs explain` 会输出生成计划，包括实际 recipe 路径、repo、framework、template 和参数最终值。`render` 和 `run` 使用同一套解析结果，因此推荐先 `explain` 再 `render`。
+
+## 运行记录
+
+`qs run` 默认保存运行记录。记录中包含：
+
+```text
+plan.json
+script.sh
+stdout.log
+stderr.log
+result.json
+```
+
+执行失败后，先用 `qs last` 或 `qs last --json` 找到最近记录，再读取脚本和日志定位问题。
+
+## 远程来源
+
+QS 当前支持两类远程输入：
+
+- `git+` Git source：可用于 recipe、repo 和 framework。
+- HTTP(S) file source：可用于 recipe 和 framework 文件。
+
+远程内容会先缓存到本地，再按本地文件或 repo 解析。QS 不把普通远程 shell 文本当作脚本直接执行。
+
+## 推荐协作路径
+
+```text
+explain / list templates / inspect template
+  -> render
+  -> 审查生成脚本
+  -> run
+  -> last
+  -> 根据记录修改 recipe 或 template
+```
+
+更多细节见 [Agent 协作流程](../manual/agent-workflow.md)。

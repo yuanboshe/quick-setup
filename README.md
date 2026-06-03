@@ -1,21 +1,56 @@
-# quick-setup
+# quick-setup 文档站
 
-> A tool that rapidly generates shell scripts through templates and configurations.
+本仓库是 `quick-setup` 的公开文档站仓库，最终发布在 [yuanboshe/quick-setup](https://github.com/yuanboshe/quick-setup)。站点内容位于 `docs/`，当前使用 VitePress 构建，并通过 GitHub Pages 发布到：
 
-## Overview
+```text
+https://qs.pz1.top/
+```
 
-Shell script management commonly faces two major issues:
-1. Complex structured design and difficult maintenance. Some scripts require parameter changes, feature adjustments, or even logical modifications across different scenarios. This necessitates a structured design where the framework logic is intertwined with script functionality, making them hard to read and maintain.
-2. Limited reusability. Each script is typically tailored to specific scenarios, making many features difficult to reuse; the lack of a unified standard makes it challenging to extract and reuse functionalities from one's own or others' scripts.
+QS 二进制文件通过 GitHub Release 发布；文档站负责说明下载方式、提供安装脚本，并分发 Agent skill 的 raw 文件。仓库仅承载公开文档、安装脚本和 Agent skill，不承载 QS 程序代码或构建流程。
 
-quick-setup aims to address the aforementioned problems while striving to achieve **low learning cost and quick mastery**.
+## 本地开发
 
-## Applicable Scenarios
+首次进入仓库后安装前端依赖：
 
-- **Simplifying Script Management**: If you have a multitude of scripts and wish to reduce management complexity, quick-setup offers a set of development standards. Developers only need to follow these standards, break down their scripts into functional templates to form components, and add them to their personal component library, which can then be maintained. When using, quick-setup can combine different components based on configuration files to generate the final automated scripts.
-- **Automation and Deployment Scenarios**: If you frequently encounter various automation and deployment scenarios and need to conveniently reuse your own and others' scripts, simply write "menu" configuration files, and quick-setup will generate the final automated scripts. For routine automation tasks, you can maintain a series of "menu" configuration files for different scenarios or directly use configuration files shared by others.
-- **Customization of Script Presentation**: For designers who wish to conveniently modify the presentation of scripts without altering their functionality, quick-setup separates the framework from core functions, allowing designers to create different framework templates and easily change the presentation of the final automated scripts.
+```sh
+npm install
+```
 
-## Other
+启动本地开发服务：
 
-For any project-related questions or issues, please submit them to the [issues](https://github.com/yuanboshe/quick-setup/issues).
+```sh
+npm run docs:dev
+```
+
+按终端输出访问本地预览地址，默认是：
+
+```text
+http://localhost:5173/
+```
+
+## 构建
+
+构建文档站：
+
+```sh
+npm run docs:build
+```
+
+本地预览构建产物：
+
+```sh
+npm run docs:preview
+```
+
+## 发布资产
+
+- CLI 下载文件：[GitHub Releases](https://github.com/yuanboshe/quick-setup/releases)
+- SHA256 校验文件：随 GitHub Release 发布
+- 安装脚本真源：`scripts/install.sh`
+- 下载说明页：`docs/download/index.md`
+- Agent skill 真源：`skills/qs-command/SKILL.md`、`skills/qs-repo/SKILL.md`
+- Agent skill 说明页：`docs/skills/index.md`
+
+`docs/public/install.sh` 和 `docs/public/skills/` 由 `npm run sync-public` 从上述真源生成，用于 GitHub Pages 静态发布，不作为可手工维护的事实源提交。
+
+更新版本时，需要同步检查 GitHub Release 资产、`SHA256SUMS`、`scripts/install.sh` 中的版本号、下载说明页和 skill 说明页。

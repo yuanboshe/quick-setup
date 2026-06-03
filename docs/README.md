@@ -1,21 +1,58 @@
 # quick-setup
 
-> 一款能够通过模板和配置快速生成shell脚本的工具。
+quick-setup 是一个用 Go 编写的本地 CLI，用 `recipe + repo/component/template + framework` 生成普通 shell 脚本，并可在明确需要时直接执行生成内容。
 
-## 概述
-
-shell脚本管理普遍存在两个主要问题：
-1. 结构化设计复杂，难维护。一些脚本在不同场景需改参数、增减配功能、甚至改逻辑，需要进行结构化设计，框架逻辑和脚本功能混杂在一起很难阅读及维护。
-2. 难复用。每个脚本通常针对特定场景，很多功能难复用；缺乏统一标准，自己的脚本和他人的脚本很难抽取功能进行复用。
-
-quick-setup旨在解决上述问题，同时力求实现**低学习成本快速上手**。
+它的核心目标是把一次性的 shell 操作沉淀为可复用、可解释、可审查、可追踪的脚本资产，同时保持低学习成本和普通 shell 可读性。
 
 ## 适用场景
 
-- **简化脚本管理**：如果您拥有大量脚本并希望降低管理难度，quick-setup提供了一套开发规范。开发者只需遵循这些规范，将自己的脚本按功能拆分为模板，形成组件，并加入到个人组件库中，之后只需维护这个组件库。使用时，quick-setup可以根据配置文件组合不同的组件，生成最终的自动化脚本。  
-- **自动化部署场景**：如果您经常面临各种自动化部署场景，并需要方便地复用自己和他人的脚本，只需编写“菜单”配置文件，quick-setup就能生成最终的自动化脚本。对于常规的自动化操作，可以维护一系列针对不同场景的“菜单”配置文件，或直接使用他人分享的配置文件。
-- **脚本呈现的定制化**：对于希望在不改变脚本功能的前提下方便地修改脚本呈现的设计者，quick-setup将框架与核心功能分离，允许设计者创建不同的框架模板，轻松改变最终自动化脚本的表现形式。
+- 管理多段安装、配置、诊断脚本，并希望按功能复用。
+- 为不同机器或项目组合相同 template，只在 recipe 中覆盖参数。
+- 在执行前审查生成脚本，降低远程来源、系统修改和高权限操作的风险。
+- 让 Agent 先理解 recipe、repo、template 和参数，再生成脚本、记录执行结果。
 
-## 其他
+## 当前能力
 
-如有任何项目相关的问题或建议，请在[issues](https://github.com/yuanboshe/quick-setup/issues)中提出。
+当前 CLI 已支持：
+
+- `render`：根据 recipe 生成脚本文件。
+- `run`：生成脚本并通过 `bash <script.sh>` 执行。
+- `explain`：解释 recipe 解析后的 repo、framework、template 和最终参数。
+- `list templates`：列出 recipe 声明 repo 中的可用 template。
+- `inspect template`：查看单个 template 的说明、参数、元数据和来源路径。
+- `last`：查看最近一次默认运行记录。
+- `repo fetch`、`repo list`、`repo clean`：管理 Git repo 缓存。
+- `version`：输出版本号。
+- `export-example`：导出内置示例仓库。
+- `serve`：启动本地 HTTP demo server。
+
+默认入口文件名是 `recipe.yaml`。`config.yaml` 只用于 repo 根目录或 template 目录中的默认上下文文件，包含 `args` 和 `metadata`。
+
+## 安全使用路径
+
+推荐流程是：
+
+1. 先用 `explain`、`list templates`、`inspect template` 理解输入、template 和参数。
+2. 再用 `render` 生成脚本，并人工审查脚本内容。
+3. 只有在明确需要执行时，才使用 `run`。
+4. 执行后用 `last` 查看运行摘要，并按记录路径读取脚本和日志。
+
+远程 Git source 和 HTTP(S) file source 会先缓存到本地，再按本地文件或 repo 解析；QS 不支持直接执行远程 shell 文本。
+
+## 文档入口
+
+- [快速开始](quickstart/quickstart.md)
+- [核心概念](quickstart/concept.md)
+- [CLI 命令手册](manual/cli.md)
+- [recipe 手册](manual/recipe.md)
+- [template 手册](manual/template.md)
+- [template config 手册](manual/template-config.md)
+- [repo 与 component 手册](manual/repo-component.md)
+- [framework 手册](manual/framework.md)
+- [远程来源与缓存](manual/remote-source-cache.md)
+- [运行记录](manual/run-record.md)
+- [Agent 协作流程](manual/agent-workflow.md)
+
+## 反馈
+
+问题和建议可以提交到 [quick-setup issues](https://github.com/yuanboshe/quick-setup/issues)。
