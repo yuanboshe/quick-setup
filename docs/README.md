@@ -8,7 +8,6 @@ Linux 用户直接安装：
 
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | bash
-qs version
 ```
 
 导出内置示例仓库，先解释，再生成脚本：

@@ -8,14 +8,12 @@ Linux 用户可以直接安装：
 
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | bash
-qs version
 ```
 
 其他平台先从 [下载页](../download/) 获取二进制，再确认命令可用：
 
 ```sh
 qs version
-qs --help
 ```
 
 根命令 `qs` 只显示帮助；实际动作都使用明确子命令。
