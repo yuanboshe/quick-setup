@@ -8,7 +8,7 @@
 https://github.com/yuanboshe/quick-setup/releases/tag/v0.3.0
 ```
 
-## Linux 一行安装
+## Bash 一行安装
 
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | bash
@@ -21,13 +21,19 @@ Release 页面包含 Linux、macOS、Windows 的 `amd64` / `arm64` 二进制，�
 
 ## 安装脚本
 
-安装脚本由文档站提供，二进制和 `SHA256SUMS` 从 GitHub Release 下载。推荐直接运行：
+安装脚本由文档站提供，二进制和 `SHA256SUMS` 从 GitHub Release 下载。当前支持 Linux，以及 Windows 上的 Git Bash、MSYS 和 Cygwin。推荐直接运行：
 
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | bash
 ```
 
 安装脚本会为下载请求设置连接超时、总超时和重试，避免 GitHub 无法访问时长时间卡住。当前脚本默认会按顺序尝试 GHX Worker `https://ghx-cache.pz1.top`、自建转发 `https://ghx.pz1.top` 和官方 GitHub。
+
+安装完成后，脚本默认会安装 bash 命令补全。Linux 优先写入 `/etc/bash_completion.d/qs`，权限不足时写入用户 completion 目录；Windows Git Bash、MSYS 和 Cygwin 会写入 `~/.bash_completion.d/qs` 并更新 `~/.bashrc`。脚本会在安装完成后提示立即生效命令，通常是 `source <补全文件路径>`；打开新的 bash shell 后也会生效。需要关闭补全安装时：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_INSTALL_COMPLETION=false bash
+```
 
 如果你在测试自己的 GHX 兼容转发服务或 Cloudflare Worker，可以设置 `QS_GHX_BASE_URL`。转发入口格式应为 `<base>?url=<escaped GitHub URL>`。
 

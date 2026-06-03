@@ -36,6 +36,7 @@ const vitepressBin = process.platform === "win32"
 const child = spawn(vitepressBin, ["preview", "docs", ...process.argv.slice(2)], {
   cwd: root,
   stdio: "inherit",
+  shell: process.platform === "win32",
 });
 
 child.on("exit", (code, signal) => {

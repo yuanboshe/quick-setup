@@ -20,9 +20,16 @@ qs ghx doctor [--json]
 qs version
 qs export-example <path>
 qs serve
+qs completion <bash|zsh|fish|powershell>
 ```
 
 根命令 `qs` 只显示帮助。需要诊断加载过程时，使用全局 `--verbose`，加载细节会写入 stderr。
+
+`completion` 输出 shell 补全脚本。安装脚本默认会为 bash 安装补全；手动生成时可执行：
+
+```sh
+qs completion bash
+```
 
 ## 输入路径规则
 

@@ -34,6 +34,7 @@ qs ghx doctor [--json]
 qs serve
 qs version
 qs export-example <path>
+qs completion <bash|zsh|fish|powershell>
 ```
 
 根命令 `qs` 只用于显示帮助；执行动作时使用明确子命令。
