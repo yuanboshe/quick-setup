@@ -63,7 +63,7 @@ qs run ./recipe.yaml --record-dir ./runs
 qs run ./recipe.yaml --no-record
 ```
 
-`--no-record` 会关闭运行记录，但仍会写入临时脚本文件执行，结束后清理临时文件。
+`--no-record` 会关闭运行记录。
 
 ## 查看最近记录
 

@@ -89,7 +89,7 @@ qs run ./recipe.yaml --no-record
 
 `run` 会生成脚本文件，再通过 `bash <script.sh>` 执行。Windows 下默认优先使用 Git for Windows 的 Git Bash；如需指定执行器，可设置 `QS_BASH`。
 
-默认会保存运行记录。`--record-dir <dir>` 指定单次记录基础目录，`--no-record` 关闭记录并使用临时脚本执行。
+默认会保存运行记录。`--record-dir <dir>` 指定单次记录目录，`--no-record` 关闭记录。
 
 ## GHX GitHub 访问
 
@@ -163,7 +163,7 @@ qs version
 导出内置示例仓库：
 
 ```sh
-qs export-example ./demo
+qs export-example ./
 ```
 
 启动本地 HTTP demo server：

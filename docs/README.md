@@ -14,15 +14,15 @@ qs version
 导出内置示例仓库，先解释，再生成脚本：
 
 ```sh
-qs export-example ./demo
-qs explain ./demo/example-repo
-qs render ./demo/example-repo -o ./demo/quick-setup.sh
+qs export-example ./
+qs explain ./example-repo
+qs render ./example-repo -o ./quick-setup.sh
 ```
 
 确认脚本内容符合预期后再执行：
 
 ```sh
-qs run ./demo/example-repo
+qs run ./example-repo
 qs last
 ```
 

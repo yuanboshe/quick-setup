@@ -29,7 +29,7 @@ curl -fsSL https://qs.pz1.top/install.sh | bash
 
 安装脚本会为下载请求设置连接超时、总超时和重试，避免 GitHub 无法访问时长时间卡住。当前脚本默认会按顺序尝试 GHX Worker `https://ghx-cache.pz1.top`、自建转发 `https://ghx.pz1.top` 和官方 GitHub。
 
-如果你在测试自己的 GHX 兼容转发服务或 Cloudflare Worker，可以临时设置 `QS_GHX_BASE_URL`。转发入口格式应为 `<base>?url=<escaped GitHub URL>`。
+如果你在测试自己的 GHX 兼容转发服务或 Cloudflare Worker，可以设置 `QS_GHX_BASE_URL`。转发入口格式应为 `<base>?url=<escaped GitHub URL>`。
 
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URL="https://ghx-cache.pz1.top" bash

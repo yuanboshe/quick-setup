@@ -167,7 +167,7 @@ qs run ./recipe.yaml --record-dir ./runs
 qs run ./recipe.yaml --no-record
 ```
 
-`run` 通过 `bash <script.sh>` 执行生成脚本。Windows 下默认使用 Git for Windows 的 Git Bash，不使用 WSL bash；如果 Git Bash 不在默认安装路径，可用 `QS_BASH` 指定 `bash.exe`。默认会把运行记录保存到 QS 全局运行日志目录，包括解析计划、生成脚本、执行器、stdout、stderr 和结果摘要。默认目录是 `~/.qs/runs`；`QS_HOME` 会改为 `$QS_HOME/runs`；`QS_RUNS_DIR` 可直接指定目录。`--record-dir <dir>` 覆盖单次记录目录；`--no-record` 关闭记录，并使用临时脚本文件执行。
+`run` 通过 `bash <script.sh>` 执行生成脚本。Windows 下默认使用 Git for Windows 的 Git Bash，不使用 WSL bash；如果 Git Bash 不在默认安装路径，可用 `QS_BASH` 指定 `bash.exe`。默认会把运行记录保存到 QS 全局运行日志目录，包括解析计划、生成脚本、执行器、stdout、stderr 和结果摘要。默认目录是 `~/.qs/runs`；`QS_HOME` 会改为 `$QS_HOME/runs`；`QS_RUNS_DIR` 可直接指定目录。`--record-dir <dir>` 覆盖单次记录目录；`--no-record` 关闭记录。
 
 查看最近一次默认运行记录：
 
