@@ -55,4 +55,14 @@ npm run docs:preview
 
 `docs/public/install.sh` 和 `docs/public/skills/` 由 `npm run sync-public` 从上述真源生成，用于 GitHub Pages 静态发布，不作为可手工维护的事实源提交。
 
+本地测试 GitHub Pages 静态发布路径：
+
+```sh
+npm run serve-public
+```
+
+该命令会先同步 `docs/public/install.sh` 和 `docs/public/skills/`，再启动本地静态服务，并打印一条使用 `_tmp/qs-install` 作为安装目标的 `curl ... | bash` 测试命令。
+
+如果要连 Release 资产下载也完全走本地服务，可以把 `qs-<os>-<arch>` 和 `SHA256SUMS` 放到某个本地静态目录，并在测试命令中设置 `QS_RELEASE_BASE_URL` 指向该目录。
+
 安装脚本默认从 GitHub Release 下载资产，并设置 curl 超时和重试。发布方可以在脚本中内置 GHX Worker、自建转发服务或 Release 镜像；自建转发服务面向公开安装脚本时应通过可信 owner 白名单免 token，不应开放通用免 token 转发。

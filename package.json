@@ -7,6 +7,7 @@
     "sync-public": "node scripts/sync-public-assets.mjs",
     "dev": "npm run sync-public && vitepress dev docs",
     "build": "npm run sync-public && vitepress build docs",
+    "serve-public": "node scripts/serve-public.mjs",
     "preview": "node scripts/preview.mjs",
     "docs:dev": "npm run dev",
     "docs:build": "npm run build",
