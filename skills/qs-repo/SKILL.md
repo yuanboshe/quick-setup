@@ -191,7 +191,16 @@ metadata:
 
 ## Recipe
 
-`recipe` 选择 repo、framework 和 templates。默认文件名通常是 `recipe.yaml`，但 source 明确指定文件时不要求必须使用这个文件名。Recipe 可以来自本地文件、本地目录默认文件、Git repo 内文件或 HTTP(S) file source。
+`recipe` 选择 repo、framework 和 templates。默认文件名通常是 `recipe.yaml`，但 source 明确指定文件时不要求必须使用这个文件名。Recipe 可以来自本地文件、本地目录默认文件、Git repo 内文件或 HTTP(S) file source。GitHub 远程来源由 QS 内置 GHX SDK 访问，不要求用户单独安装 `ghx` 二进制。
+
+`qs.ghx` 默认开启。开启时，最终生成脚本会注入 GHX runtime shim，让 GitHub URL 的常见 `curl` / `wget` 下载形态通过 QS 内置 GHX SDK 访问。组件 template 可以继续保持普通 `curl` / `wget` 写法；如果某个 recipe 需要完全保留原始网络行为，可以关闭：
+
+```yaml
+qs:
+  ghx: false
+```
+
+GHX provider、Worker、自建转发服务和 token header 属于本机或项目级 GHX 配置，不写入 recipe。
 
 编写 `recipe` 时，区分核心必填参数和可推理参数。核心必填参数必须写清楚；可推理参数能省略时优先省略，让 recipe 保持简单。
 
@@ -219,12 +228,15 @@ qs:
       name: base
 ```
 
+GitHub Git source 会通过 GHX 获取 archive snapshot；非 GitHub Git source 仍依赖本机 `git`。远程 repo 发布时仍建议 pin 到 tag 或 commit SHA，避免 floating branch 带来的不可复现。
+
 字段分层：
 
 - `qs.templates` 是核心必填参数，决定 `recipe` 组合哪些 template。
 - `qs.repos[].path` 是核心必填参数，决定组件库来源。
 - `qs.repos[].name` 是可推理参数；多个 repo 可能重名时再显式填写。
 - `qs.framework` 是可推理参数；省略时使用默认 framework。
+- `qs.ghx` 是可推理参数；省略时启用 GHX runtime shim，显式 `false` 时关闭。
 
 省略 `name` 时，QS 会从 repo path 推断名称。如果多个 repo 可能重名，显式填写 `name`。
 
@@ -279,7 +291,7 @@ echo "-------------------- template {{$template.templateId}} -------------------
 
 framework 可以统一加 header、错误处理、分隔输出或执行包装，但不应承载具体业务安装逻辑。template 不应依赖某个 framework 的私有约定。
 
-`qs.framework` 可以是本地文件、repo 内路径、Git source 或 HTTP(S) file source。省略时使用默认 framework。本地路径找不到时会回退默认 framework；显式远程 source 下载失败时应视为错误。
+`qs.framework` 可以是本地文件、repo 内路径、Git source 或 HTTP(S) file source。省略时使用默认 framework。本地路径找不到时会回退默认 framework；显式远程 source 下载失败时应视为错误。GitHub framework source 同样通过 GHX SDK 访问。
 
 ## 发布和维护
 

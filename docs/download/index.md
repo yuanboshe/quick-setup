@@ -1,11 +1,18 @@
 # 下载 quick-setup
 
-当前发布版本：`v0.2.0`
+当前发布版本：`v0.3.0`
 
 程序文件和校验文件发布在 GitHub Release：
 
 ```text
-https://github.com/yuanboshe/quick-setup/releases/tag/v0.2.0
+https://github.com/yuanboshe/quick-setup/releases/tag/v0.3.0
+```
+
+## Linux 一行安装
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | bash
+qs version
 ```
 
 ## 平台文件
@@ -14,7 +21,7 @@ Release 页面包含 Linux、macOS、Windows 的 `amd64` / `arm64` 二进制，�
 
 ## 安装脚本
 
-Linux 用户可以直接使用安装脚本。脚本由文档站提供，二进制和 `SHA256SUMS` 从 GitHub Release 下载。
+安装脚本由文档站提供，二进制和 `SHA256SUMS` 从 GitHub Release 下载。
 
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | bash

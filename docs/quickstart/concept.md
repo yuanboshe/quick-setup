@@ -37,6 +37,7 @@ repo-name/component3_multi_files/hello.sh:
 - `qs.repos[].path`：组件库路径，可以是本地路径或 `git+` Git source。
 - `qs.repos[].name`：repo 逻辑名称，可省略；QS 会从路径推断。
 - `qs.framework`：framework 文件，可省略；省略时使用内置默认 framework。
+- `qs.ghx`：是否启用生成脚本中的 GHX runtime shim；默认开启，通常不需要填写。
 - `qs.templates`：本次选择的 template 列表，是必填字段。
 
 recipe 中的参数覆盖只覆盖已声明参数。参数必须来自 template 路径上的 `config.yaml.args`，或 template 文件中的 `# @arg` 标记。
@@ -150,6 +151,17 @@ QS 当前支持两类远程输入：
 - HTTP(S) file source：可用于 recipe 和 framework 文件。
 
 远程内容会先缓存到本地，再按本地文件或 repo 解析。QS 不把普通远程 shell 文本当作脚本直接执行。
+
+## GitHub 访问增强
+
+QS 内置 GHX SDK。GitHub 远程来源会自动通过 GHX provider fallback 访问。生成脚本默认也会注入 GHX runtime shim，让常见 GitHub `curl` / `wget` 下载更可靠。
+
+这项能力默认开启，不需要在 recipe 中配置 provider。自建转发、Cloudflare Worker 和 token header 属于 GHX 配置。只有需要关闭脚本运行时增强时，才写：
+
+```yaml
+qs:
+  ghx: false
+```
 
 ## 推荐协作路径
 

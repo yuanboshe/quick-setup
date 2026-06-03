@@ -15,10 +15,13 @@ qs:
 
 `qs.templates` 和 `repos[].path` 是核心必填信息。`repos[].name` 和 `qs.framework` 可以由 QS 推理或回退，能省略时优先省略。
 
+`qs.ghx` 默认开启，不写也等价于 `true`。只有需要完全保留原始 GitHub `curl` / `wget` 网络行为时，才设置为 `false`。
+
 ## qs 配置块
 
 ```yaml
 qs:
+  ghx: true
   repos:
     - path: .
       name: repo-name
@@ -36,6 +39,7 @@ qs:
 - `repos[].path`：repo 路径，可以是本地绝对路径、本地相对路径或 `git+` Git source。
 - `repos[].name`：repo 逻辑名称，可省略；本地 repo 使用目录名，远程 Git repo 使用仓库名并去掉 `.git`。
 - `qs.framework`：最终脚本外层模板，可省略；省略时使用内置默认 framework。
+- `qs.ghx`：是否在生成脚本中启用 GHX runtime shim；默认 `true`，显式 `false` 时关闭。
 - `qs.templates`：按顺序选择的 template 列表。
 
 如果没有声明任何 repo，QS 会尝试使用 recipe 文件所在目录作为默认 repo。

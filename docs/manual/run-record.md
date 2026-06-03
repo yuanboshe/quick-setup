@@ -12,7 +12,7 @@ bash <script.sh>
 
 执行生成内容。
 
-Windows 下默认优先使用 Git for Windows 的 Git Bash。需要指定自定义 bash 时，可以设置 `QS_BASH`。
+Windows 下默认优先使用 Git for Windows 的 Git Bash。需要指定自定义 bash 时，可以设置 `QS_BASH`。执行生成脚本时，QS 会设置 `QS_BIN` 指向当前 `qs` 可执行文件，供 GHX runtime shim 调用。
 
 ## 默认记录位置
 
@@ -43,7 +43,7 @@ result.json
 
 文件说明：
 
-- `plan.json`：解析后的生成计划。
+- `plan.json`：解析后的生成计划，包含 `ghx_enabled` 开关状态。
 - `script.sh`：实际执行的生成脚本。
 - `stdout.log`：执行过程 stdout。
 - `stderr.log`：执行过程 stderr。

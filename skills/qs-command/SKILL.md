@@ -28,6 +28,9 @@ qs last [--json]
 qs repo fetch <git-source>
 qs repo list [--json]
 qs repo clean [git-source|--all] [--dry-run]
+qs ghx get <github-url> -o <path> [--json]
+qs ghx cat <github-url>
+qs ghx doctor [--json]
 qs serve
 qs version
 qs export-example <path>
@@ -64,6 +67,7 @@ git+<git-url>.git@<ref>//<recipe-path>
 - `<ref>` 可以是 branch、tag 或 40 位 commit SHA；为空时使用远程默认分支 HEAD。
 - Git URL 必须带 `.git`，避免和 SSH 地址、Windows 路径、recipe 路径分隔产生歧义。
 - QS 会把远程 repo 先下载到本地 cache，再按本地 repo 解析。
+- GitHub Git source 内置走 GHX SDK 获取 archive snapshot，不要求用户额外安装 `ghx` 二进制；非 GitHub Git source 仍依赖本机 `git`。
 
 远程文件输入：
 
@@ -76,9 +80,36 @@ https://example.com/path/to/
 - URL 路径为空或以 `/` 结尾时默认尝试 `recipe.yaml`。
 - URL 明确指定文件名时，文件名不要求是 `recipe.yaml`。
 - QS 会把远程文件先下载到本地 file cache，再按本地文件解析。
+- GitHub file source 内置走 GHX SDK；非 GitHub HTTP(S) file source 仍使用 QS 原下载逻辑。
 - HTTP(S) file source 是文件资产输入，不表示直接执行远程 shell 文本。
 
 不要把 `curl | bash` 或未知远程脚本文本交给 QS 直接执行。
+
+## GHX 增强
+
+QS 内置 GHX SDK。使用 GitHub source 时，QS 会自动通过 GHX provider fallback 访问 GitHub，不要求用户安装 `ghx` 二进制。GHX 的 Worker、自建转发服务、token header 和 provider 顺序由 GHX 配置控制：
+
+```text
+~/.ghx/config.yaml
+当前工作目录下的 ghx.yaml
+```
+
+`qs.ghx` 默认开启。开启时，生成脚本头部会注入 runtime shim，在脚本运行期间接管 GitHub URL 的常见 `curl` / `wget` 下载形态，并转为 `qs ghx get/cat`。非 GitHub URL 继续走系统原始 `curl` / `wget`。如需关闭：
+
+```yaml
+qs:
+  ghx: false
+```
+
+深度诊断或手动测试时使用：
+
+```sh
+qs ghx doctor
+qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh -o file.sh
+qs ghx cat https://raw.githubusercontent.com/owner/repo/main/file.sh
+```
+
+`qs ghx` 命令是 QS 的内置子命令，不依赖外部 `ghx` 可执行文件。
 
 使用远程输入时，优先 pin 到 tag 或 commit SHA。使用 floating branch 或默认 HEAD 时，在回复中说明结果会随远端变化。
 
@@ -169,6 +200,8 @@ qs repo clean --all
 ```
 
 `repo clean` 默认会删除匹配项。清理前先使用 `--dry-run`，除非用户已经明确要求执行清理。
+
+清理 GitHub source 时，QS 只读取本地 cache metadata 匹配 URL/ref/commit，不访问远端；清理非 GitHub source 时，指定 ref 仍可能需要本机 `git` 解析 commit。
 
 ## 安全约束
 

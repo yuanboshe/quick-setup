@@ -14,6 +14,9 @@ qs last [--json]
 qs repo fetch <git-source>
 qs repo list [--json]
 qs repo clean [git-source|--all] [--dry-run]
+qs ghx get <github-url> -o <path> [--json]
+qs ghx cat <github-url>
+qs ghx doctor [--json]
 qs version
 qs export-example <path>
 qs serve
@@ -47,7 +50,7 @@ qs explain ./recipe.yaml
 qs explain ./recipe.yaml --json
 ```
 
-`explain` 会严格校验 recipe 中选中的 template 和参数覆盖。template ID 缺失、repo 歧义、template 文件不存在或覆盖未知参数时会失败。
+`explain` 会严格校验 recipe 中选中的 template 和参数覆盖。template ID 缺失、repo 歧义、template 文件不存在或覆盖未知参数时会失败。输出中会显示 `ghx` 开关状态；`--json` 中对应字段是 `ghx_enabled`。
 
 列出 template：
 
@@ -87,6 +90,33 @@ qs run ./recipe.yaml --no-record
 `run` 会生成脚本文件，再通过 `bash <script.sh>` 执行。Windows 下默认优先使用 Git for Windows 的 Git Bash；如需指定执行器，可设置 `QS_BASH`。
 
 默认会保存运行记录。`--record-dir <dir>` 指定单次记录基础目录，`--no-record` 关闭记录并使用临时脚本执行。
+
+## GHX GitHub 访问
+
+QS 内置 GHX SDK，不要求用户安装外部 `ghx` 二进制。GitHub recipe、repo、framework 和 file source 会自动通过 GHX provider fallback 访问。
+
+生成脚本默认启用 GHX runtime shim。脚本运行期间，常见 GitHub `curl` / `wget` 下载会转为 `qs ghx get/cat`；非 GitHub URL 保持原始 `curl` / `wget` 行为。需要关闭时，在 recipe 中设置：
+
+```yaml
+qs:
+  ghx: false
+```
+
+诊断 GHX provider 配置：
+
+```sh
+qs ghx doctor
+qs ghx doctor --json
+```
+
+手动下载或输出 GitHub 资源：
+
+```sh
+qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh -o file.sh
+qs ghx cat https://raw.githubusercontent.com/owner/repo/main/file.sh
+```
+
+GHX 的自建转发、Cloudflare Worker、token header 和 provider 顺序由 GHX 配置控制，不写入 QS recipe。
 
 ## 最近运行记录
 

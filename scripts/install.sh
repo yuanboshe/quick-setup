@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION="v0.2.0"
+VERSION="v0.3.0"
 BASE_URL="https://github.com/yuanboshe/quick-setup/releases/download/${VERSION}/"
 PROXY="${1:-}"
 INSTALL_DIR="${QS_INSTALL_DIR:-/usr/local/bin}"

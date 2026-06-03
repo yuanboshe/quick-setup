@@ -49,6 +49,7 @@ Agent 需要结构化解析时，优先使用 `--json`。人类阅读时，使�
 - `metadata.requires` 是否涉及缺失命令或高权限依赖。
 - `metadata.effects` 是否涉及软件安装、系统文件、服务重启或用户组修改。
 - `metadata.network` 是否访问可信网络位置。
+- `ghx` 是否保持默认开启；开启时 GitHub `curl` / `wget` 常见下载会通过 QS 内置 GHX SDK 访问。
 - recipe 覆盖的参数是否符合预期。
 
 当前 QS 只输出这些元数据，不自动完成环境适配校验。审查结论需要人类或 Agent 自行判断。
@@ -59,7 +60,7 @@ Agent 需要结构化解析时，优先使用 `--json`。人类阅读时，使�
 qs render ./recipe.yaml -o ./quick-setup.sh
 ```
 
-审查生成脚本时，看实际 shell 内容，不只看 recipe。远程来源、`sudo`、系统目录写入、服务重启、包管理器操作和下载命令都应额外确认。
+审查生成脚本时，看实际 shell 内容，不只看 recipe。远程来源、`sudo`、系统目录写入、服务重启、包管理器操作和下载命令都应额外确认。生成脚本默认包含 GHX runtime shim；如果目标场景必须保留原始 GitHub 网络访问行为，在 recipe 中设置 `qs.ghx: false`。
 
 ## 第四步：明确需要时执行
 

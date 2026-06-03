@@ -10,7 +10,7 @@ https://github.com/yuanboshe/quick-setup
 
 ## qs-command
 
-用途：约束 Agent 如何调用、解释和记录 QS 命令，覆盖 `render`、`run`、`explain`、`list templates`、`inspect template`、`last`、repo cache 命令、远程输入和 JSON 输出等场景。
+用途：约束 Agent 如何调用、解释和记录 QS 命令，覆盖 `render`、`run`、`explain`、`list templates`、`inspect template`、`last`、repo cache、`qs ghx`、远程输入和 JSON 输出等场景。
 
 下载路径：
 

@@ -2,6 +2,8 @@
 
 QS 支持远程 recipe、远程 repo 和远程 framework，但远程内容都会先缓存到本地，再按本地文件或 repo 解析。
 
+GitHub 来源内置走 GHX SDK。用户可以在 GHX 配置中启用自建转发、Cloudflare Worker 或其他 provider；QS 会通过 SDK 透明复用这些配置。
+
 ## 远程来源类型
 
 当前支持两类远程输入：
@@ -10,6 +12,36 @@ QS 支持远程 recipe、远程 repo 和远程 framework，但远程内容都会
 - HTTP(S) file source：用于 recipe 和 framework 文件。
 
 HTTP(S) file source 是可读取文件资产，不表示直接执行远程 shell 文本。QS 不支持 `curl | bash` 式远程执行。
+
+## GitHub 与 GHX
+
+以下 GitHub 输入会自动通过 GHX SDK 访问：
+
+- GitHub `git+` repo source。
+- GitHub recipe/framework/file source。
+- 生成脚本中常见 GitHub `curl` / `wget` 下载形态。
+
+GHX 配置路径：
+
+```text
+~/.ghx/config.yaml
+当前工作目录下的 ghx.yaml
+```
+
+诊断当前 QS 能读取到的 provider：
+
+```sh
+qs ghx doctor
+```
+
+生成脚本中的 GHX runtime shim 默认开启。它只接管 GitHub URL，非 GitHub URL 会回退到系统原始 `curl` / `wget`。如需关闭：
+
+```yaml
+qs:
+  ghx: false
+```
+
+QS 不会把远程文件 source 当作 shell 直接执行；GHX runtime shim 也只是增强脚本运行时的 GitHub 下载可靠性。
 
 ## Git source
 
