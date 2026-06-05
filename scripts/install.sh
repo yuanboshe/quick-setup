@@ -18,6 +18,8 @@ SKILL_BASE_URL="${QS_SKILL_BASE_URL:-https://qs.pz1.top/skills}"
 AGENTS_HOME="${AGENTS_HOME:-${HOME}/.agents}"
 SKILLS_DIR="${QS_SKILLS_DIR:-${AGENTS_HOME}/skills}"
 AGENT_SKILL_LINKS="${QS_AGENT_SKILL_LINKS:-auto}"
+INSTALL_TARGET="${QS_INSTALL_TARGET:-}"
+INSTALL_SCRIPT_URL="${QS_INSTALL_SCRIPT_URL:-https://qs.pz1.top/install.sh}"
 
 if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$ ]]; then
     echo "Invalid QS_VERSION: ${VERSION}. Expected v0.3.0 or v0.4.0-rc.1." >&2
@@ -53,6 +55,37 @@ ghx_proxy_url() {
     printf '%s%surl=%s' "${base}" "${sep}" "$(urlencode "${target}")"
 }
 
+is_http_url() {
+    local value="$1"
+    [[ "${value}" == http://* || "${value}" == https://* ]]
+}
+
+shell_quote() {
+    printf '%q' "$1"
+}
+
+current_script_path() {
+    local source="${BASH_SOURCE[0]:-${0}}"
+    local base
+
+    if [ -z "${source}" ]; then
+        return 1
+    fi
+    base="$(basename "${source}")"
+    case "${base}" in
+        bash|bash.exe|sh|sh.exe)
+            return 1
+            ;;
+    esac
+    if [ ! -f "${source}" ]; then
+        return 1
+    fi
+    (
+        cd "$(dirname "${source}")"
+        printf '%s/%s' "$(pwd -P)" "$(basename "${source}")"
+    )
+}
+
 download_one() {
     local url="$1"
     local output="$2"
@@ -81,6 +114,162 @@ append_url_list() {
             output_ref+=("${item}")
         fi
     done
+}
+
+copy_local_asset() {
+    local base="$1"
+    local asset="$2"
+    local output="$3"
+    local source="${base%/}/${asset}"
+
+    if [ -f "${source}" ]; then
+        echo "Use local ${asset} from ${source} ..."
+        cp "${source}" "${output}"
+        return 0
+    fi
+    if [ "${asset}" = "SHA256SUMS" ] && [ -n "${FILE:-}" ] && [ -f "${base%/}/${FILE}" ]; then
+        echo "Generate SHA256SUMS from ${base%/}/${FILE} ..."
+        (cd "${base}" && sha256sum "${FILE}") > "${output}"
+        return 0
+    fi
+    echo "Local asset not found: ${source}" >&2
+    return 1
+}
+
+normalize_platform() {
+    local raw_os="$1"
+    local raw_arch="$2"
+
+    case "${raw_arch}" in
+        x86_64|amd64)
+            ARCH="amd64"
+            ;;
+        aarch64|arm64)
+            ARCH="arm64"
+            ;;
+        *)
+            echo "Unsupported architecture: ${raw_arch}" >&2
+            exit 1
+            ;;
+    esac
+
+    case "${raw_os}" in
+        Linux)
+            OS="linux"
+            ;;
+        MINGW*|MSYS*|CYGWIN*)
+            OS="windows"
+            ;;
+        *)
+            echo "Unsupported operating system: ${raw_os}" >&2
+            exit 1
+            ;;
+    esac
+
+    FILE="qs-${OS}-${ARCH}"
+    INSTALL_NAME="qs"
+    if [ "${OS}" = "windows" ]; then
+        FILE="${FILE}.exe"
+        INSTALL_NAME="qs.exe"
+    fi
+}
+
+detect_local_platform() {
+    normalize_platform "$(uname -s)" "$(uname -m)"
+}
+
+remote_env_prefix() {
+    local include_release_base="$1"
+    local names=(
+        QS_VERSION
+        QS_INSTALL_DIR
+        QS_INSTALL_COMPLETION
+        QS_INSTALL_SKILLS
+        QS_SKILL_BASE_URL
+        QS_SKILLS_DIR
+        QS_AGENT_SKILL_LINKS
+        QS_GHX_BASE_URL
+        QS_GHX_BASE_URLS
+        QS_GHX_TOKEN
+        QS_CURL_CONNECT_TIMEOUT
+        QS_CURL_MAX_TIME
+        QS_CURL_RETRY
+        AGENTS_HOME
+    )
+    local name value output=""
+
+    if [ "${include_release_base}" = "true" ]; then
+        names+=(QS_RELEASE_BASE_URL QS_RELEASE_BASE_URLS)
+    fi
+    for name in "${names[@]}"; do
+        value="${!name:-}"
+        if [ -n "${value}" ]; then
+            output+="${name}=$(shell_quote "${value}") "
+        fi
+    done
+    printf '%s' "${output}"
+}
+
+run_remote_install_from_url() {
+    local target="$1"
+    local env_prefix
+
+    env_prefix="$(remote_env_prefix true)"
+    ssh "${target}" "curl -fsSL $(shell_quote "${INSTALL_SCRIPT_URL}") | ${env_prefix}bash"
+}
+
+run_remote_install_from_local_assets() {
+    local target="$1"
+    local asset_dir="$2"
+    local script_path=""
+    local stage_dir
+    local env_prefix
+    local remote_cmd
+    local asset_path
+    local has_asset=0
+
+    if [ ! -d "${asset_dir}" ]; then
+        echo "Local release asset directory not found: ${asset_dir}" >&2
+        exit 1
+    fi
+
+    stage_dir="$(mktemp -d)"
+    for asset_path in "${asset_dir%/}"/qs-*; do
+        if [ -f "${asset_path}" ]; then
+            cp "${asset_path}" "${stage_dir}/$(basename "${asset_path}")"
+            has_asset=1
+        fi
+    done
+    if [ "${has_asset}" -ne 1 ]; then
+        echo "Local release asset directory should contain qs-* files: ${asset_dir}" >&2
+        rm -rf "${stage_dir}"
+        exit 1
+    fi
+    if script_path="$(current_script_path)"; then
+        cp "${script_path}" "${stage_dir}/install.sh"
+    fi
+    if [ -f "${asset_dir%/}/SHA256SUMS" ]; then
+        cp "${asset_dir%/}/SHA256SUMS" "${stage_dir}/SHA256SUMS"
+    fi
+
+    env_prefix="$(remote_env_prefix false)"
+    remote_cmd="set -e; remote_dir=\$(mktemp -d \"\${TMPDIR:-/tmp}/qs-install-assets.XXXXXX\"); trap 'rm -rf \"\${remote_dir}\"' EXIT; tar -C \"\${remote_dir}\" -xf -; if [ -f \"\${remote_dir}/install.sh\" ]; then ${env_prefix}QS_RELEASE_ASSET_DIR=\"\${remote_dir}\" bash \"\${remote_dir}/install.sh\"; else curl -fsSL $(shell_quote "${INSTALL_SCRIPT_URL}") | ${env_prefix}QS_RELEASE_ASSET_DIR=\"\${remote_dir}\" bash; fi"
+    tar -C "${stage_dir}" -cf - . | ssh "${target}" "${remote_cmd}"
+    rm -rf "${stage_dir}"
+}
+
+run_remote_install() {
+    local target="${INSTALL_TARGET}"
+
+    if [ -z "${target}" ]; then
+        return 0
+    fi
+    if [ -n "${QS_RELEASE_BASE_URL:-}" ] && ! is_http_url "${QS_RELEASE_BASE_URL}" && [ -d "${QS_RELEASE_BASE_URL}" ]; then
+        run_remote_install_from_local_assets "${target}" "${QS_RELEASE_BASE_URL}"
+    else
+        run_remote_install_from_url "${target}"
+    fi
+    exit 0
 }
 
 ensure_bashrc_sources_completion() {
@@ -118,6 +307,11 @@ download_asset() {
     local release_base_urls=()
     local ghx_base_urls=()
 
+    if [ -n "${QS_RELEASE_ASSET_DIR:-}" ]; then
+        copy_local_asset "${QS_RELEASE_ASSET_DIR}" "${asset}" "${output}"
+        return $?
+    fi
+
     if [ -n "${QS_RELEASE_BASE_URL:-}" ]; then
         release_base_urls+=("${QS_RELEASE_BASE_URL}")
     fi
@@ -131,6 +325,11 @@ download_asset() {
     append_url_list "${DEFAULT_GHX_BASE_URLS}" ghx_base_urls
 
     for base in "${release_base_urls[@]}"; do
+        if ! is_http_url "${base}"; then
+            copy_local_asset "${base}" "${asset}" "${output}" && return 0
+            echo "Local asset failed: ${base%/}/${asset}" >&2
+            continue
+        fi
         url="${base%/}/${asset}"
         echo "Download ${asset} from ${url} ..."
         if download_one "${url}" "${output}"; then
@@ -344,40 +543,8 @@ install_skills() {
     link_installed_skill "qs-repo"
 }
 
-ARCH="$(uname -m)"
-case "${ARCH}" in
-    x86_64|amd64)
-        ARCH="amd64"
-        ;;
-    aarch64|arm64)
-        ARCH="arm64"
-        ;;
-    *)
-        echo "Unsupported architecture: ${ARCH}"
-        exit 1
-        ;;
-esac
-
-OS="$(uname -s)"
-case "${OS}" in
-    Linux)
-        OS="linux"
-        ;;
-    MINGW*|MSYS*|CYGWIN*)
-        OS="windows"
-        ;;
-    *)
-        echo "Unsupported operating system: ${OS}"
-        exit 1
-        ;;
-esac
-
-FILE="qs-${OS}-${ARCH}"
-INSTALL_NAME="qs"
-if [ "${OS}" = "windows" ]; then
-    FILE="${FILE}.exe"
-    INSTALL_NAME="qs.exe"
-fi
+run_remote_install
+detect_local_platform
 if [ -n "${QS_INSTALL_DIR:-}" ]; then
     INSTALL_DIR="${QS_INSTALL_DIR}"
 elif [ "${OS}" = "windows" ]; then

@@ -92,6 +92,30 @@ curl -fsSL https://qs.pz1.top/install.sh | QS_RELEASE_BASE_URL="https://mirror.e
 
 多个镜像目录可以用空格或逗号传给 `QS_RELEASE_BASE_URLS`。
 
+`QS_RELEASE_BASE_URL` 也可以指向本机 release 资产目录。目录中需要包含目标平台文件，例如 `qs-linux-amd64` 或 `qs-linux-arm64`；没有 `SHA256SUMS` 时安装脚本会为目标文件临时生成校验文件。
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_RELEASE_BASE_URL=./output bash
+```
+
+需要把本机资产安装到远程服务器时，设置 `QS_INSTALL_TARGET`。安装脚本会把 `QS_RELEASE_BASE_URL` 指向的本机资产目录和当前安装脚本上传到远端临时目录，然后在远端继续执行同一份安装逻辑。该模式要求本机能通过 `ssh` 连接目标服务器，远端可用 `tar`。远程本机资产安装只使用一个 SSH 会话；使用密码登录时通常只需要输入一次密码。
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_INSTALL_TARGET=user@host QS_RELEASE_BASE_URL=./output bash
+```
+
+如果使用尚未发布到网站的本地安装脚本，直接执行脚本文件即可；安装脚本会把自身和本机资产一起上传到远端：
+
+```sh
+QS_INSTALL_TARGET=user@host QS_RELEASE_BASE_URL=./output bash ./scripts/install.sh
+```
+
+如果只想在远程服务器安装某个已发布版本，不传本机资产目录即可：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_INSTALL_TARGET=user@host QS_VERSION="v0.3.0" bash
+```
+
 仍然可以使用旧的代理前缀参数。脚本会把该前缀拼接到 GitHub Release 资产 URL 前面。
 
 ```sh

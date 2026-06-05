@@ -44,6 +44,16 @@ npm run docs:preview
 
 `docs:preview` 使用 VitePress 默认端口 `4173`。如果该端口已有服务在运行，脚本会提示预览地址并退出成功；如果不是文档预览服务，先停止占用该端口的进程再重新执行。
 
+## 安装脚本回归测试
+
+修改 `scripts/install.sh` 后运行：
+
+```sh
+npm run test:install
+```
+
+该测试覆盖本机 release 资产目录安装，以及 `QS_INSTALL_TARGET` 远程安装模式下上传本地安装脚本和目标二进制的行为。安装脚本新增入口变量或改变资产来源规则时，应同步扩展该测试。
+
 ## 发布资产
 
 - CLI 下载文件：[GitHub Releases](https://github.com/yuanboshe/quick-setup/releases)
