@@ -14,6 +14,26 @@ https://github.com/yuanboshe/quick-setup/releases/tag/v0.3.0
 curl -fsSL https://qs.pz1.top/install.sh | bash
 ```
 
+## 查看和选择版本
+
+所有可安装版本以 GitHub Release 为准：
+
+```text
+https://github.com/yuanboshe/quick-setup/releases
+```
+
+默认安装命令会安装当前稳定版本。需要安装某个已发布版本时，设置 `QS_VERSION`：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_VERSION="v0.3.0" bash
+```
+
+`QS_VERSION` 必须对应已经发布并带有完整二进制资产和 `SHA256SUMS` 的 release tag。预发布版本也可以用同样方式安装，例如：
+
+```sh
+curl -fsSL https://qs.pz1.top/install.sh | QS_VERSION="v0.4.0-rc.1" bash
+```
+
 ## 平台文件
 
 Release 页面包含 Linux、macOS、Windows 的 `amd64` / `arm64` 二进制，以及对应的 `SHA256SUMS` 校验文件。优先从 Release 页面选择与你系统匹配的文件。

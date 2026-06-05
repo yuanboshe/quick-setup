@@ -2,7 +2,8 @@
 
 set -e
 
-VERSION="v0.3.0"
+DEFAULT_VERSION="v0.3.0"
+VERSION="${QS_VERSION:-${DEFAULT_VERSION}}"
 BASE_URL="https://github.com/yuanboshe/quick-setup/releases/download/${VERSION}/"
 PROXY="${1:-${QS_DOWNLOAD_PREFIX:-}}"
 CURL_CONNECT_TIMEOUT="${QS_CURL_CONNECT_TIMEOUT:-8}"
@@ -17,6 +18,11 @@ SKILL_BASE_URL="${QS_SKILL_BASE_URL:-https://qs.pz1.top/skills}"
 AGENTS_HOME="${AGENTS_HOME:-${HOME}/.agents}"
 SKILLS_DIR="${QS_SKILLS_DIR:-${AGENTS_HOME}/skills}"
 AGENT_SKILL_LINKS="${QS_AGENT_SKILL_LINKS:-auto}"
+
+if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$ ]]; then
+    echo "Invalid QS_VERSION: ${VERSION}. Expected v0.3.0 or v0.4.0-rc.1." >&2
+    exit 1
+fi
 
 urlencode() {
     local raw="$1"
