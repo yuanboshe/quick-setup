@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { copyFileSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,6 +38,16 @@ function run(command, args, options = {}) {
   });
 }
 
+async function gitRefExists(ref) {
+  return new Promise((resolveRef) => {
+    const child = spawn("git", ["rev-parse", "-q", "--verify", ref], {
+      cwd: root,
+      stdio: "ignore",
+    });
+    child.on("exit", (code) => resolveRef(code === 0));
+  });
+}
+
 function copyIfExists(source, target) {
   if (!existsSync(source)) {
     return;
@@ -62,19 +72,16 @@ async function buildVersion(entry) {
     return;
   }
 
-  const tagExists = await new Promise((resolveTag) => {
-    const child = spawn("git", ["rev-parse", "-q", "--verify", `refs/tags/${entry.tag}`], {
-      cwd: root,
-      stdio: "ignore",
-    });
-    child.on("exit", (code) => resolveTag(code === 0));
-  });
-  if (!tagExists) {
+  if (!(await gitRefExists(`refs/tags/${entry.tag}`))) {
+    await run("git", ["fetch", "--tags", "--force", "origin", `refs/tags/${entry.tag}:refs/tags/${entry.tag}`]);
+  }
+  if (!(await gitRefExists(`refs/tags/${entry.tag}`))) {
     throw new Error(`versions.json 引用了不存在的文档 tag：${entry.tag}`);
   }
 
   const worktreeParent = mkdtempSync(join(tmpdir(), "qs-docs-version-"));
   const worktree = join(worktreeParent, entry.tag.replace(/[^0-9A-Za-z_.-]/g, "-"));
+  const targetOut = join(pagesOut, entry.url.replace(/^\/|\/$/g, ""));
 
   try {
     await run("git", ["worktree", "add", "--detach", worktree, entry.tag]);
@@ -86,9 +93,16 @@ async function buildVersion(entry) {
       env: {
         QS_DOCS_VERSION: entry.version,
         QS_DOCS_BASE: entry.url,
-        QS_DOCS_OUT_DIR: join(pagesOut, entry.url.replace(/^\/|\/$/g, "")),
+        QS_DOCS_OUT_DIR: targetOut,
       },
     });
+    if (!existsSync(targetOut)) {
+      const legacyOut = join(worktree, "docs", ".vitepress", "dist");
+      if (!existsSync(legacyOut)) {
+        throw new Error(`文档 tag ${entry.tag} 没有生成 VitePress dist 目录。`);
+      }
+      cpSync(legacyOut, targetOut, { recursive: true });
+    }
   } finally {
     await run("git", ["worktree", "remove", "--force", worktree]).catch(() => {});
     rmSync(worktreeParent, { recursive: true, force: true });

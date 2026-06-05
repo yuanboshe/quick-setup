@@ -1,11 +1,11 @@
 # 下载 quick-setup
 
-当前发布版本：`v0.3.0`
+当前发布版本：`v0.4.0`
 
 程序文件和校验文件发布在 GitHub Release：
 
 ```text
-https://github.com/yuanboshe/quick-setup/releases/tag/v0.3.0
+https://github.com/yuanboshe/quick-setup/releases/tag/v0.4.0
 ```
 
 ## Bash 一行安装
@@ -87,7 +87,7 @@ curl -fsSL https://qs.pz1.top/install.sh | QS_GHX_BASE_URLS="https://ghx-cache.p
 如果你已经把 Release 资产同步到自己的镜像目录，设置 `QS_RELEASE_BASE_URL`。该目录下需要包含 `qs-linux-amd64`、`qs-linux-arm64` 和 `SHA256SUMS` 等文件。
 
 ```sh
-curl -fsSL https://qs.pz1.top/install.sh | QS_RELEASE_BASE_URL="https://mirror.example.com/quick-setup/v0.3.0/" bash
+curl -fsSL https://qs.pz1.top/install.sh | QS_RELEASE_BASE_URL="https://mirror.example.com/quick-setup/v0.4.0/" bash
 ```
 
 多个镜像目录可以用空格或逗号传给 `QS_RELEASE_BASE_URLS`。

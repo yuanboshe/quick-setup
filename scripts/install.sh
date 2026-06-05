@@ -2,7 +2,7 @@
 
 set -e
 
-DEFAULT_VERSION="v0.3.0"
+DEFAULT_VERSION="v0.4.0"
 VERSION="${QS_VERSION:-${DEFAULT_VERSION}}"
 BASE_URL="https://github.com/yuanboshe/quick-setup/releases/download/${VERSION}/"
 PROXY="${1:-${QS_DOWNLOAD_PREFIX:-}}"
