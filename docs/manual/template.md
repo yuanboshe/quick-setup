@@ -49,7 +49,7 @@ QS 标记写在 shell 注释里，由 `# @` 开头。
 # @network download.docker.com mirrors.aliyun.com
 ```
 
-这些元数据会出现在 `explain --json`、`list templates --json` 和 `inspect template --json` 中，用于执行前审查。当前元数据不改变脚本生成内容，也不自动阻止执行。
+这些元数据会出现在 `qs inspect --json` 中，用于执行前审查。当前元数据不改变脚本生成内容，也不自动阻止执行。
 
 ## 参数声明
 
@@ -86,6 +86,14 @@ NAME="{{.name}}"
 ```
 :::
 
+只需要无说明参数时，也可以直接写同名自引用变量赋值：
+
+::: v-pre
+```sh
+NAME="{{.name}}"
+```
+:::
+
 明确默认值为空字符串：
 
 ```sh
@@ -93,7 +101,7 @@ NAME="{{.name}}"
 NAME=""
 ```
 
-如果变量值是同名 Go template 占位符，例如 `NAME="&#123;&#123;.name&#125;&#125;"`，它只声明参数和说明，不提供 template 默认值。此时目录 `config.yaml.args` 或 recipe 可以提供默认值，二者都未提供时最终值为空字符串。
+如果变量值是同名 Go template 占位符，例如 `NAME="&#123;&#123;.name&#125;&#125;"`，它声明参数但不提供 template 默认值。有 `# @arg` 时使用注释作为参数说明，没有 `# @arg` 时说明为空。此时目录 `config.yaml.args` 或 recipe 可以提供默认值，二者都未提供时最终值为空字符串。
 
 ## 多行说明
 

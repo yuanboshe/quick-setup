@@ -34,13 +34,13 @@ repo-name/component3_multi_files/hello.sh:
 
 核心字段：
 
-- `qs.repos[].path`：组件库路径，可以是本地路径或 `git+` Git source。
+- `qs.repos[].path`：组件库路径，可以是本地路径、`git+` Git source 或 GitHub repo/tree URL。
 - `qs.repos[].name`：repo 逻辑名称，可省略；QS 会从路径推断。
 - `qs.framework`：framework 文件，可省略；省略时使用内置默认 framework。
 - `qs.ghx`：是否启用生成脚本中的 GHX runtime shim；默认开启，通常不需要填写。
 - `qs.templates`：本次选择的 template 列表，是必填字段。
 
-recipe 中的参数覆盖只覆盖已声明参数。参数必须来自 template 路径上的 `config.yaml.args`，或 template 文件中的 `# @arg` 标记。
+recipe 中的参数覆盖只覆盖适用范围内已声明参数。参数可以来自 template 路径上的 `config.yaml.args`、template 文件中的 `# @arg` 标记，或 `NAME="&#123;&#123;.name&#125;&#125;"` 这类自引用变量赋值。repo 级和目录级覆盖可作为共享默认值候选，未使用该参数的 template 会忽略它。
 
 ## repo
 
@@ -127,7 +127,7 @@ framework 可以统一添加 header、错误处理、分隔输出或执行包装
 
 ## 生成计划
 
-`qs explain` 会输出生成计划，包括实际 recipe 路径、repo、framework、template 和参数最终值。`render` 和 `run` 使用同一套解析结果，因此推荐先 `explain` 再 `render`。
+`qs inspect <recipe>` 会输出生成计划，包括实际 recipe 路径、repo、framework、template 和参数最终值。`render` 和 `run` 使用同一套解析结果，因此推荐先 `inspect` 再 `render`。
 
 ## 运行记录
 
@@ -147,7 +147,7 @@ result.json
 
 QS 当前支持两类远程输入：
 
-- `git+` Git source：可用于 recipe、repo 和 framework。
+- Git source：可用于 repo，也可用于 repo 内 recipe 和 framework。普通 GitHub repo/tree URL 会自动归一为 Git source。
 - HTTP(S) file source：可用于 recipe 和 framework 文件。
 
 远程内容会先缓存到本地，再按本地文件或 repo 解析。QS 不把普通远程 shell 文本当作脚本直接执行。
@@ -166,7 +166,7 @@ qs:
 ## 推荐协作路径
 
 ```text
-explain / list templates / inspect template
+inspect
   -> render
   -> 审查生成脚本
   -> run

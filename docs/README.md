@@ -14,7 +14,7 @@ curl -fsSL https://qs.pz1.top/install.sh | bash
 
 ```sh
 qs export-example ./
-qs explain ./example-repo
+qs inspect ./example-repo/recipe.yaml
 qs render ./example-repo -o ./quick-setup.sh
 ```
 
@@ -25,16 +25,15 @@ qs run ./example-repo
 qs last
 ```
 
-这就是 QS 的最小使用闭环：`explain -> render -> run -> last`。
+这就是 QS 的最小使用闭环：`inspect -> render -> run -> last`。
 
 ## 关键能力
 
-- `explain`：看清 recipe 会加载哪些 repo、framework、template 和参数。
+- `inspect`：按输入推断 repo、recipe 或 template，看清可用能力和生成计划。
 - `render`：生成可审查 shell 脚本。
 - `run`：执行生成脚本并保存运行记录。
 - `last`：查看最近一次运行摘要和日志路径。
-- `list templates` / `inspect template`：发现和检查 template。
-- `repo fetch/list/clean`：管理远程 Git repo 缓存。
+- `clean`：清理 `repos`、`files` 和 `ghx` 三类资产缓存。
 - `qs ghx get/cat/doctor`：诊断或手动使用内置 GHX GitHub 访问能力。
 
 GitHub 远程来源内置走 GHX SDK。生成脚本默认启用 GHX runtime shim，常见 GitHub `curl` / `wget` 下载会自动通过 GHX provider fallback 访问；需要保留原始网络行为时，在 recipe 中设置 `qs.ghx: false`。

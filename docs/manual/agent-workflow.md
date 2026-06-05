@@ -5,7 +5,7 @@ QS 面向 Agent 的默认协作路径是先理解、再生成、再审查、最�
 ## 推荐流程
 
 ```text
-explain / list templates / inspect template
+inspect repo / inspect recipe / inspect template
   -> render
   -> 人类或 Agent 审查生成脚本
   -> run
@@ -15,25 +15,25 @@ explain / list templates / inspect template
 
 ## 第一步：理解输入
 
-先解释 recipe：
+先检查 recipe：
 
 ```sh
-qs explain ./recipe.yaml
-qs explain ./recipe.yaml --json
+qs inspect ./recipe.yaml
+qs inspect ./recipe.yaml --json
 ```
 
 发现可用 template：
 
 ```sh
-qs list templates ./recipe.yaml
-qs list templates ./recipe.yaml --json
+qs inspect .
+qs inspect . --json
 ```
 
 检查单个 template：
 
 ```sh
-qs inspect template ./recipe.yaml repo-name/component/install.sh
-qs inspect template ./recipe.yaml repo-name/component/install.sh --json
+qs inspect ./recipe.yaml repo-name/component/install.sh
+qs inspect ./recipe.yaml repo-name/component/install.sh --json
 ```
 
 Agent 需要结构化解析时，优先使用 `--json`。人类阅读时，使用默认文本输出。
@@ -101,8 +101,8 @@ qs last --json
 
 - Git source 优先使用 tag 或 commit SHA。
 - 使用默认分支或浮动分支时，说明结果可能随远端变化。
-- 远程 repo 可以先用 `qs repo fetch` 下载，再用 `qs repo list` 查看 cache。
-- 清理 cache 前先用 `qs repo clean --dry-run`。
+- 普通 GitHub 来源优先直接复制 repo/tree/blob/raw URL；需要非 GitHub Git、SSH/private repo、显式 ref 或 repo 内 recipe 路径时，再使用 `git+`。
+- 清理资产缓存前先用 `qs clean --dry-run`。
 - HTTP(S) file source 只作为 recipe 或 framework 文件输入，不是远程脚本执行入口。
 
 ## 沉淀经验

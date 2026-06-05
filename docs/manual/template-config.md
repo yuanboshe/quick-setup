@@ -126,5 +126,5 @@ metadata:
 - repo 根目录放全局默认值，例如通用平台、解释器或镜像源。
 - component 目录放这一类 template 共享的默认参数和元数据。
 - template 特有的参数默认值优先写在 template 中。
-- 需要让 recipe 覆盖某个参数时，先在 `config.yaml.args` 或 template `# @arg` 中声明该参数。
+- 需要让 recipe 覆盖某个参数时，先在 `config.yaml.args`、template `# @arg` 或同名自引用变量赋值中声明该参数。
 - 不要把 recipe 内容写进 `config.yaml`。

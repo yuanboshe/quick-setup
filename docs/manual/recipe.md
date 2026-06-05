@@ -36,7 +36,7 @@ qs:
 字段说明：
 
 - `qs.repos`：本次 recipe 使用的组件库列表。
-- `repos[].path`：repo 路径，可以是本地绝对路径、本地相对路径或 `git+` Git source。
+- `repos[].path`：repo 路径，可以是本地绝对路径、本地相对路径、`git+` Git source 或 GitHub repo/tree URL。
 - `repos[].name`：repo 逻辑名称，可省略；本地 repo 使用目录名，远程 Git repo 使用仓库名并去掉 `.git`。
 - `qs.framework`：最终脚本外层模板，可省略；省略时使用内置默认 framework。
 - `qs.ghx`：是否在生成脚本中启用 GHX runtime shim；默认 `true`，显式 `false` 时关闭。
@@ -49,13 +49,14 @@ qs:
 常见输入：
 
 ```sh
-qs explain
-qs explain ./recipe.yaml
-qs explain ./example-repo
-qs explain git+https://example.com/org/qs-repo.git@v1.0.0
-qs explain git+https://example.com/org/qs-repo.git@v1.0.0//recipes/server.yaml
-qs explain https://example.com/recipes/server.yml
-qs explain https://example.com/recipes/
+qs inspect ./recipe.yaml
+qs inspect https://github.com/owner/repo/blob/main/recipe.yaml
+qs render
+qs render ./example-repo
+qs render git+https://example.com/org/qs-repo.git@v1.0.0
+qs render git+https://example.com/org/qs-repo.git@v1.0.0//recipes/server.yaml
+qs render https://example.com/recipes/server.yml
+qs render https://example.com/recipes/
 ```
 
 本地目录、Git source 和 HTTP(S) 目录 URL 未指定具体文件时，默认读取 `recipe.yaml`。明确指定文件名时，文件名不要求必须是 `recipe.yaml`。
@@ -120,7 +121,9 @@ repo-name/component3_multi_files/hello.sh:
 5. recipe 根部的目录覆盖项。
 6. recipe 根部的 template 覆盖项。
 
-recipe 不能覆盖未声明参数。可用参数来自 template 路径上的 `config.yaml.args` 和 template 文件中的 `# @arg`。
+recipe 不能覆盖无法匹配任何适用 template 的参数。可用参数来自 template 路径上的 `config.yaml.args`、template 文件中的 `# @arg`，以及同名自引用变量赋值，例如 `NAME="&#123;&#123;.name&#125;&#125;"`。
+
+repo 级和目录级覆盖是默认值候选：只要覆盖范围内至少一个已选 template 声明该参数，其他未声明该参数的 template 会忽略它。template 级覆盖必须由该 template 自身声明参数。
 
 ## metadata 边界
 
@@ -139,6 +142,15 @@ qs:
     - base/docker/install.sh
 ```
 
+普通 GitHub repo 或根 tree 页面链接也可以直接作为 repo path：
+
+```yaml
+qs:
+  repos:
+    - path: https://github.com/yuanboshe/qs-repo/tree/devel
+      name: base
+```
+
 组件库必须是本地目录或 Git repo。不要把 HTTP(S) file source 写入 `repos[].path`。
 
 ## 远程 recipe
@@ -146,11 +158,14 @@ qs:
 recipe 本身可以来自 Git source 或 HTTP(S) file source：
 
 ```sh
-qs explain git+https://example.com/org/qs-recipes.git@v1.0.0//server/recipe.yaml
-qs explain https://example.com/recipes/server.yaml
+qs inspect git+https://example.com/org/qs-recipes.git@v1.0.0//server/recipe.yaml
+qs inspect https://github.com/owner/repo/blob/main/server/recipe.yaml
+qs inspect https://example.com/recipes/server.yaml
 ```
 
 远程 recipe 会先缓存到本地，再继续解析。远程内容不会被当作 shell 文本直接执行。
+
+GitHub repo 内 recipe 文件会优先复用已缓存的同 repo/ref snapshot；未命中时先下载单文件。如果 recipe 省略 `qs.repos`，或包含相对 `repos[].path`、`repos[].path: .`、相对 `qs.framework`，QS 会继续下载完整 repo snapshot 并使用 snapshot 内 recipe。
 
 ## 推荐写法
 

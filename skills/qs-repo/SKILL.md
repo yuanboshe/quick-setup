@@ -119,7 +119,7 @@ QS 标记写在 shell 注释中，由 `# @` 开头。
 # @network download.docker.com mirrors.aliyun.com
 ```
 
-`qs explain --json`、`qs list templates --json` 和 `qs inspect template --json` 会输出这些元数据，Agent 应用它们判断目标系统、解释器、依赖、权限和网络风险。
+`qs inspect --json` 会输出这些元数据。Agent 可以用 `qs inspect <repo>` 发现 repo 提供的 template，用 `qs inspect <recipe>` 理解 recipe 解析后的计划，用 `qs inspect <input> <template-id>` 查看单个 template 的说明、参数和配置来源。
 
 `# @arg` 绑定它后面的第一个非注释变量赋值：
 
@@ -134,7 +134,7 @@ MIRROR="https://example.com/mirror"
 - 配置变量名使用小写，可以匹配脚本中任意大小写形式的变量名。
 - 原始赋值使用单引号、双引号或无引号时，渲染后保留原引号形式。
 - `# @arg` 和变量赋值之间可以有空行，但不要插入其他命令。
-- 需要使用 `config.yaml.args` 作为默认值时，把变量写成同名 Go template 占位符，例如 `NAME="{{.name}}"`；这会声明参数和说明，但不会用 template 默认值覆盖 config。
+- 需要使用 `config.yaml.args` 或 recipe 作为默认值时，把变量写成同名 Go template 占位符，例如 `NAME="{{.name}}"`；这会声明参数但不会用 template 默认值覆盖 config。有 `# @arg` 时使用注释作为参数说明，没有 `# @arg` 时说明为空。
 - 需要 template 明确默认值为空字符串时，写 `NAME=""`；这会覆盖 config 中的同名默认值。
 
 常见写法：
@@ -191,7 +191,7 @@ metadata:
 
 ## Recipe
 
-`recipe` 选择 repo、framework 和 templates。默认文件名通常是 `recipe.yaml`，但 source 明确指定文件时不要求必须使用这个文件名。Recipe 可以来自本地文件、本地目录默认文件、Git repo 内文件或 HTTP(S) file source。GitHub 远程来源由 QS 内置 GHX SDK 访问，不要求用户单独安装 `ghx` 二进制。
+`recipe` 选择 repo、framework 和 templates。默认文件名通常是 `recipe.yaml`，但 source 明确指定文件时不要求必须使用这个文件名。Recipe 可以来自本地文件、本地目录默认文件、Git repo 根目录默认文件、Git repo 内文件或 HTTP(S) file source。用户直接传入 GitHub repo/tree 页面 URL 时，`render` 和 `run` 会读取该 repo 根目录的 `recipe.yaml`；用户直接传入 GitHub repo 内 recipe 文件页面 URL 时，QS 优先复用已缓存的同 repo/ref snapshot，未命中时先下载 recipe 单文件，如果 recipe 省略 `qs.repos`，或包含相对 `repos[].path`、`repos[].path: .`、相对 `qs.framework`，则继续下载完整 repo snapshot。GitHub 远程来源由 QS 内置 GHX SDK 访问，不要求用户单独安装 `ghx` 二进制。
 
 `qs.ghx` 默认开启。开启时，最终生成脚本会注入 GHX runtime shim，让 GitHub URL 的常见 `curl` / `wget` 下载形态通过 QS 内置 GHX SDK 访问。组件 template 可以继续保持普通 `curl` / `wget` 写法；如果某个 recipe 需要完全保留原始网络行为，可以关闭：
 
@@ -200,12 +200,13 @@ qs:
   ghx: false
 ```
 
-GHX provider、Worker、自建转发服务和 token header 属于本机或项目级 GHX 配置，不写入 recipe。
+GHX provider、Worker、自建转发服务和 token header 属于 QS 的 GHX embedded profile 配置，不写入 recipe。QS 读取 `~/.qs/config/ghx.yaml`、项目 `.qs/ghx.yaml` 和项目 `ghx.yaml`，默认启用指向 `/qs` 公共入口的自建服务和 Worker provider；独立 `ghx` CLI 的 `~/.ghx/config.yaml` 不影响 QS。
 
 编写 `recipe` 时，区分核心必填参数和可推理参数。核心必填参数必须写清楚；可推理参数能省略时优先省略，让 recipe 保持简单。
 
 ```yaml
 qs:
+  description: 安装 Go 和 Docker 的示例流程
   repos:
     - path: .
       name: repo
@@ -219,7 +220,7 @@ repo/golang/install_go.sh:
   version: 1.23.0
 ```
 
-`qs.repos[].path` 可以是本地绝对路径、本地相对路径或远程 Git source。组件库是 repo 资产，不要把 HTTP(S) file source 写入 `repos[].path`。
+`qs.repos[].path` 可以是本地绝对路径、本地相对路径、远程 Git source 或 GitHub repo/tree URL。`path: .` 表示当前 recipe 所在目录；当顶层输入是 GitHub repo/tree URL，或 GitHub repo 内 recipe 文件使用 repo snapshot 时，它指向下载后的 repo snapshot 根目录。组件库是 repo 资产，不要把 HTTP(S) file source 写入 `repos[].path`。
 
 ```yaml
 qs:
@@ -228,7 +229,7 @@ qs:
       name: base
 ```
 
-GitHub Git source 会通过 GHX 获取 archive snapshot；非 GitHub Git source 仍依赖本机 `git`。远程 repo 发布时仍建议 pin 到 tag 或 commit SHA，避免 floating branch 带来的不可复现。
+GitHub Git source 会通过 GHX 获取 archive snapshot；非 GitHub Git source 仍依赖本机 `git`。远程组件库当前下载完整源码快照并缓存到 `~/.qs/repos`，缓存内不保留 `.git` 历史目录。不要把大量无关大文件塞进组件库；如果确实需要大仓库优化，应等待后续 sparse/partial repo 能力。远程 repo 发布时仍建议 pin 到 tag 或 commit SHA，避免 floating branch 带来的不可复现。
 
 字段分层：
 
@@ -237,6 +238,7 @@ GitHub Git source 会通过 GHX 获取 archive snapshot；非 GitHub Git source 
 - `qs.repos[].name` 是可推理参数；多个 repo 可能重名时再显式填写。
 - `qs.framework` 是可推理参数；省略时使用默认 framework。
 - `qs.ghx` 是可推理参数；省略时启用 GHX runtime shim，显式 `false` 时关闭。
+- `qs.description` 是可选说明文本，只用于 `inspect` 输出和人类理解，不参与生成。
 
 省略 `name` 时，QS 会从 repo path 推断名称。如果多个 repo 可能重名，显式填写 `name`。
 
@@ -259,7 +261,7 @@ template
 5. `recipe` 中的 `repo/<template-dir>`，多级目录逐级覆盖。
 6. `recipe` 中的 `repo/<template-dir>/<template-name>`。
 
-recipe 只能覆盖对应 template 已声明的参数。可用参数来自该 template 路径上的 `config.yaml.args` 和 template 文件中的 `# @arg` 声明；如果 recipe 覆盖了未声明参数，`explain`、`render` 和 `run` 会失败。需要暴露新参数时，先在 `config.yaml.args` 写默认值，或在 template 中加 `# @arg` 标记。
+recipe 只能覆盖适用范围内已选 template 声明过的参数。可用参数来自该 template 路径上的 `config.yaml.args`、template 文件中的 `# @arg` 声明，以及 `NAME="{{.name}}"` 这类自引用变量赋值。repo 级和目录级覆盖是默认值候选：只要覆盖范围内至少一个已选 template 声明该参数，其他未声明该参数的 template 会忽略它；template 精确覆盖必须由该 template 自身声明。如果 recipe 覆盖了无法匹配任何适用 template 的参数，`inspect` 的 recipe 计划、`render` 和 `run` 会失败。需要暴露新参数时，先在 `config.yaml.args` 写默认值，或在 template 中加 `# @arg` 标记；只需要无说明占位参数时，也可以直接使用自引用变量赋值。
 
 metadata 覆盖顺序从低到高：
 

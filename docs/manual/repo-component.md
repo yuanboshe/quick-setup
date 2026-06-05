@@ -88,12 +88,21 @@ repo-name/docker/ubuntu/install.sh
 
 ## 远程 repo
 
-recipe 可以引用 Git source：
+recipe 可以引用 Git source，也可以直接引用 GitHub repo/tree 页面 URL：
 
 ```yaml
 qs:
   repos:
     - path: git+https://example.com/org/qs-repo.git@v1.0.0
+      name: base
+  templates:
+    - base/docker/install.sh
+```
+
+```yaml
+qs:
+  repos:
+    - path: https://github.com/yuanboshe/qs-repo/tree/devel
       name: base
   templates:
     - base/docker/install.sh
@@ -107,7 +116,7 @@ git+<git-url>.git@<ref>
 git+<git-url>.git@<ref>//<recipe-path>
 ```
 
-作为 `repos[].path` 时，QS 使用其中的 repo；`//<recipe-path>` 对 repo cache 命令会被忽略。组件库必须是本地目录或 Git repo，不能是 HTTP(S) file source。
+作为 `repos[].path` 时，QS 使用其中的 repo；`//<recipe-path>` 只在 recipe/framework source 场景有意义。组件库必须是本地目录或 Git repo，不能是 HTTP(S) file source。
 
 ## 发布建议
 
@@ -121,6 +130,6 @@ git+<git-url>.git@<ref>//<recipe-path>
 - repo 是否能作为独立组件库被理解。
 - component 分类是否清楚。
 - template 是否能被人类直接审查。
-- 参数是否通过 `# @arg` 或 `config.yaml.args` 声明。
+- 参数是否通过 `# @arg`、`config.yaml.args` 或同名自引用变量赋值声明。
 - 元数据是否覆盖平台、解释器、依赖、副作用和网络访问。
 - recipe 中是否使用清晰的 template ID。

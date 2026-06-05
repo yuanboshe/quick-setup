@@ -5,15 +5,11 @@ QS 的命令设计围绕三件事：理解输入、生成可审查脚本、在�
 ## 命令总览
 
 ```text
-qs render [recipe file|recipe dir|git source|file source] -o <script>
-qs run [recipe file|recipe dir|git source|file source]
-qs explain [recipe file|recipe dir|git source|file source] [--json]
-qs list templates [recipe file|recipe dir|git source|file source] [--json]
-qs inspect template [recipe file|recipe dir|git source|file source] <template-id> [--json]
+qs inspect [input] [template-id] [--json] [--platform <value>] [--shell <value>]
+qs render [recipe-input] -o <script>
+qs run [recipe-input]
 qs last [--json]
-qs repo fetch <git-source>
-qs repo list [--json]
-qs repo clean [git-source|--all] [--dry-run]
+qs clean [--dry-run]
 qs ghx get <github-url> -o <path> [--json]
 qs ghx cat <github-url>
 qs ghx doctor [--json]
@@ -31,52 +27,79 @@ qs completion <bash|zsh|fish|powershell>
 qs completion bash
 ```
 
-## 输入路径规则
+## 输入推断
 
-`render`、`run`、`explain`、`list templates` 和 `inspect template` 共享 recipe 输入规则：
+`inspect` 用来理解资产，会尽量根据输入推断类型：
 
-1. 传入文件时，读取该文件。
-2. 传入目录时，读取目录下的 `recipe.yaml`。
-3. 不传输入时，读取当前目录下的 `recipe.yaml`。
-4. 输入以 `git+` 开头时，先下载 Git source 到 repo cache，再读取 repo 内 recipe。
-5. 输入是 HTTP(S) URL 时，先下载到 file cache，再按本地 recipe 文件解析。
-
-```sh
-qs explain ./recipe.yaml
-qs explain .
-qs explain git+https://example.com/org/qs-repo.git@v1.0.0
-qs explain https://example.com/recipes/server.yml
-```
-
-## 信息命令
-
-解释 recipe：
+1. 未传输入时，检查当前目录作为 repo。
+2. 本地目录作为 repo。
+3. 本地 `.yaml` / `.yml` 文件作为 recipe。
+4. GitHub repo URL 或根 tree URL 作为 repo。
+5. GitHub blob/raw recipe 文件 URL 作为 recipe。
+6. `git+<git-url>.git[@ref]` 作为 repo。
+7. `git+<git-url>.git[@ref]//<recipe-path>` 作为 recipe。
+8. 其他 HTTP(S) URL 作为 recipe file source。
+9. 单个非路径、非 source 参数作为当前目录 repo 下的 template ID。
+10. `[input] [template-id]` 先解析 input，再在对应 repo 或 recipe 上下文中检查 template。
 
 ```sh
-qs explain ./recipe.yaml
-qs explain ./recipe.yaml --json
+qs inspect
+qs inspect ./example-repo
+qs inspect ./example-repo/recipe.yaml --json
+qs inspect https://github.com/yuanboshe/qs-repo/tree/devel --json
+qs inspect https://github.com/yuanboshe/qs-repo/blob/example-repo/recipe.yaml --json
+qs inspect ./example-repo repo-name/component1_simple/hello.sh --json
 ```
 
-`explain` 会严格校验 recipe 中选中的 template 和参数覆盖。template ID 缺失、repo 歧义、template 文件不存在或覆盖未知参数时会失败。输出中会显示 `ghx` 开关状态；`--json` 中对应字段是 `ghx_enabled`。
+`render` 和 `run` 只接受 recipe 语义输入：
 
-列出 template：
+1. 未传输入时，读取当前目录下的 `recipe.yaml`。
+2. 本地目录读取目录下的 `recipe.yaml`。
+3. 本地文件直接作为 recipe。
+4. GitHub repo URL、根 tree URL 或 `git+<git-url>.git[@ref]` 下载 repo 后读取根目录 `recipe.yaml`。
+5. GitHub blob/raw 文件 URL、其他 HTTP(S) URL 或 `git+...//<recipe-path>` 读取指定 recipe。
 
 ```sh
-qs list templates ./recipe.yaml
-qs list templates ./recipe.yaml --json
-qs list templates ./recipe.yaml --platform ubuntu --shell bash
+qs render ./recipe.yaml -o ./quick-setup.sh
+qs render ./example-repo -o ./quick-setup.sh
+qs render https://github.com/yuanboshe/qs-repo/tree/devel -o ./quick-setup.sh
+qs run https://github.com/yuanboshe/qs-repo/blob/example-repo/recipe.yaml
 ```
 
-`--platform` 按 `metadata.platform` 字符串包含过滤，`--shell` 按 `metadata.shell` 精确过滤。
+GitHub tree 子目录当前不作为 repo root 支持；需要把 recipe 放在 repo 根，或使用 GitHub blob/raw recipe 文件 URL、`git+...//<recipe-path>`。
 
-检查 template：
+## inspect
+
+检查 repo 能力：
 
 ```sh
-qs inspect template ./recipe.yaml repo-name/component/install.sh
-qs inspect template ./recipe.yaml repo-name/component/install.sh --json
+qs inspect
+qs inspect ./example-repo
+qs inspect https://github.com/yuanboshe/qs-repo/tree/devel --json
+qs inspect ./example-repo --platform ubuntu --shell bash --json
 ```
 
-`list templates` 和 `inspect template` 面向发现和检查 repo 内容，不要求 recipe 当前选中的所有 template 或参数覆盖都有效。
+repo 场景输出 repo 路径、来源、resolved commit 和可用 template 列表。`--platform` 按 `metadata.platform` 字符串包含过滤，`--shell` 按 `metadata.shell` 精确过滤。
+
+检查 recipe 计划：
+
+```sh
+qs inspect ./recipe.yaml
+qs inspect ./recipe.yaml --json
+qs inspect https://github.com/owner/repo/blob/main/recipe.yaml --json
+```
+
+recipe 场景会严格校验 `qs.templates` 和 recipe 参数覆盖。template ID 写错、缺少上下文、template 目录或文件不存在、参数名无法匹配适用 template 时，命令会失败并输出具体错误。
+
+检查单个 template：
+
+```sh
+qs inspect repo-name/component/install.sh
+qs inspect ./example-repo repo-name/component1_simple/hello.sh --json
+qs inspect ./recipe.yaml repo-name/component/install.sh --json
+```
+
+template 场景输出 description、metadata、参数默认值、最终值、源码路径和参与合并的 `config.yaml` 路径。
 
 ## 生成脚本
 
@@ -84,7 +107,7 @@ qs inspect template ./recipe.yaml repo-name/component/install.sh --json
 qs render ./recipe.yaml -o ./quick-setup.sh
 ```
 
-`render` 使用与 `explain` 相同的解析和校验逻辑。输出路径会转成绝对路径，生成脚本会设置为可执行。
+`render` 使用与 recipe 场景 `inspect` 相同的解析和校验逻辑。输出路径会转成绝对路径，生成脚本会设置为可执行。
 
 ## 执行生成内容
 
@@ -97,6 +120,15 @@ qs run ./recipe.yaml --no-record
 `run` 会生成脚本文件，再通过 `bash <script.sh>` 执行。Windows 下默认优先使用 Git for Windows 的 Git Bash；如需指定执行器，可设置 `QS_BASH`。
 
 默认会保存运行记录。`--record-dir <dir>` 指定单次记录目录，`--no-record` 关闭记录。
+
+## clean
+
+```sh
+qs clean --dry-run
+qs clean
+```
+
+`clean` 删除 `repos`、`files` 和 `ghx` 三类资产缓存，不删除 `runs` 运行记录和 `config` 配置。没有明确清理意图时，先使用 `--dry-run`。
 
 ## GHX GitHub 访问
 
@@ -123,7 +155,13 @@ qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh -o file.sh
 qs ghx cat https://raw.githubusercontent.com/owner/repo/main/file.sh
 ```
 
-GHX 的自建转发、Cloudflare Worker、token header 和 provider 顺序由 GHX 配置控制，不写入 QS recipe。
+QS 使用 GHX embedded profile，配置读取：
+
+```text
+~/.qs/config/ghx.yaml
+当前工作目录下的 .qs/ghx.yaml
+当前工作目录下的 ghx.yaml
+```
 
 ## 最近运行记录
 
@@ -133,31 +171,6 @@ qs last --json
 ```
 
 `last` 读取默认全局运行日志目录中的最近一次记录。`last --json` 输出紧凑摘要，包含状态、退出码、时间、输入、执行器、脚本路径和日志路径。
-
-## repo cache 命令
-
-只下载远程 Git repo，不渲染、不执行：
-
-```sh
-qs repo fetch git+https://example.com/org/qs-repo.git@v1.0.0
-```
-
-列出本地 Git repo cache：
-
-```sh
-qs repo list
-qs repo list --json
-```
-
-清理 cache：
-
-```sh
-qs repo clean git+https://example.com/org/qs-repo.git@v1.0.0
-qs repo clean --all --dry-run
-qs repo clean --all
-```
-
-`repo clean` 默认会删除匹配项。清理前建议先用 `--dry-run` 预览。
 
 ## 其他命令
 
@@ -183,8 +196,8 @@ qs serve
 
 ## 安全建议
 
-- 默认先 `explain`、`list templates`、`inspect template`，再 `render`。
+- 默认先 `inspect`，再 `render`，最后才考虑 `run`。
 - 审查生成脚本后，只有明确需要执行时才 `run`。
 - 涉及 `sudo`、系统目录、服务重启、远程来源或网络下载时，先确认 template 元数据和脚本内容。
-- Agent 需要解析命令结果时，优先使用信息命令的 `--json`。
+- Agent 需要解析命令结果时，优先使用 `--json`。
 - 诊断解析过程时用 `--verbose`，不要把 stderr 诊断信息当作 JSON 主体。

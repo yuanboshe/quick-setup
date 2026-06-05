@@ -86,4 +86,4 @@ qs last --json
 4. 查看 `stderr.log` 和 `stdout.log`。
 5. 根据问题修改 recipe、template 或运行环境。
 
-如果问题与解析有关，回到 `qs explain` 或 `qs inspect template` 检查参数和 template 来源。
+如果问题与解析有关，回到 `qs inspect <recipe>` 或 `qs inspect <input> <template-id>` 检查参数和 template 来源。

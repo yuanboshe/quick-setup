@@ -37,18 +37,18 @@ example-repo/
 
 `recipe.yaml` 是入口配置。`component*/` 目录里是可复用的 shell template。
 
-## 3. 先解释 recipe
+## 3. 先检查 recipe
 
 ```sh
-qs explain ./example-repo
+qs inspect ./example-repo/recipe.yaml
 ```
 
-传入目录时，QS 会自动读取目录下的 `recipe.yaml`。`explain` 用来确认实际会使用哪些 repo、framework、template 和参数。
+`inspect` 传入 YAML 文件时会按 recipe 解析，用来确认实际会使用哪些 repo、framework、template 和参数。
 
 需要给 Agent 或脚本解析时使用 JSON：
 
 ```sh
-qs explain ./example-repo --json
+qs inspect ./example-repo/recipe.yaml --json
 ```
 
 ## 4. 生成脚本
@@ -81,13 +81,13 @@ qs last
 发现可用 template：
 
 ```sh
-qs list templates ./example-repo
+qs inspect ./example-repo
 ```
 
 检查单个 template：
 
 ```sh
-qs inspect template ./example-repo repo-name/component1_simple/hello.sh
+qs inspect ./example-repo repo-name/component1_simple/hello.sh
 ```
 
 诊断 GHX provider 配置：
