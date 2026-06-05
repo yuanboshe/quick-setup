@@ -36,13 +36,19 @@ http://localhost:5173/
 npm run docs:build
 ```
 
+构建 GitHub Pages 完整产物，包括当前文档和版本索引中列出的历史版本快照：
+
+```sh
+npm run docs:build-pages
+```
+
 本地预览构建产物：
 
 ```sh
 npm run docs:preview
 ```
 
-`docs:preview` 使用 VitePress 默认端口 `4173`。如果该端口已有服务在运行，脚本会提示预览地址并退出成功；如果不是文档预览服务，先停止占用该端口的进程再重新执行。
+`docs:preview` 使用 VitePress 默认端口 `4173`。如果该端口已有服务在运行，脚本会先停止占用端口的进程，再启动当前构建产物预览；需要保留已有进程时，使用 `npm run docs:preview -- --no-kill-port`。
 
 ## 安装脚本回归测试
 
@@ -60,10 +66,13 @@ npm run test:install
 - SHA256 校验文件：随 GitHub Release 发布
 - 安装脚本真源：`scripts/install.sh`
 - 下载说明页：`docs/download/index.md`
+- 文档版本索引：`versions.json`
 - Agent skill 真源：`skills/qs-command/SKILL.md`、`skills/qs-repo/SKILL.md`
 - Agent skill 说明页：`docs/skills/index.md`
 
-`docs/public/install.sh` 和 `docs/public/skills/` 由 `npm run sync-public` 从上述真源生成，用于 GitHub Pages 静态发布，不作为可手工维护的事实源提交。
+`versions.json` 中的 `current` 表示当前稳定文档对应的 QS 版本。站点根路径 `/` 始终发布当前稳定文档；历史版本由发布流程从对应文档 tag 构建到 `/versions/<version>/`。不要把历史版本源码拷贝到当前分支。
+
+`docs/public/install.sh`、`docs/public/versions.json` 和 `docs/public/skills/` 由 `npm run sync-public` 从上述真源生成，用于 GitHub Pages 静态发布，不作为可手工维护的事实源提交。
 
 本地测试 GitHub Pages 静态发布路径：
 

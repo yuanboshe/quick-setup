@@ -1,5 +1,14 @@
 import { defineConfig } from "vitepress";
 import { defineTeekConfig } from "vitepress-theme-teek/config";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const versionData = JSON.parse(readFileSync(resolve(repoRoot, "versions.json"), "utf8"));
+const docsVersion = process.env.QS_DOCS_VERSION || versionData.current || "unknown";
+const docsBase = process.env.QS_DOCS_BASE || "/";
+const docsOutDir = process.env.QS_DOCS_OUT_DIR;
 
 const teekConfig = defineTeekConfig({
   teekTheme: true,
@@ -33,6 +42,14 @@ const releaseAssets = [
   { text: "Skills", link: "/skills/" },
 ];
 
+const versionNav = {
+  text: `文档版本 ${docsVersion}`,
+  items: (versionData.versions || []).map((entry: { version: string; label?: string; url: string }) => ({
+    text: entry.label || entry.version,
+    link: entry.url,
+  })),
+};
+
 const stripMissingTeekIconfont = {
   name: "strip-missing-teek-iconfont",
   enforce: "pre" as const,
@@ -53,7 +70,8 @@ export default defineConfig({
   lang: "zh-CN",
   title: "quick-setup",
   description: "通过模板和配置快速生成 shell 脚本的工具",
-  base: "/",
+  base: docsBase,
+  outDir: docsOutDir,
   cleanUrls: true,
   srcExclude: ["public/**"],
   rewrites: {
@@ -67,6 +85,7 @@ export default defineConfig({
       { text: "快速开始", link: "/quickstart/quickstart" },
       { text: "用户手册", link: "/manual/cli" },
       { text: "发布资产", link: "/download/" },
+      versionNav,
     ],
     sidebar: {
       "/": [
@@ -90,5 +109,6 @@ export default defineConfig({
     socialLinks: [
       { icon: "github", link: "https://github.com/yuanboshe/quick-setup" },
     ],
+    qsDocsVersion: docsVersion,
   },
 });

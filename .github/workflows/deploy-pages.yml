@@ -37,13 +37,13 @@ jobs:
         run: npm ci
 
       - name: Build docs
-        run: npm run docs:build
+        run: npm run docs:build-pages
 
       - name: Upload artifact
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/.vitepress/dist
+          path: docs/.vitepress/pages-dist
 
   deploy:
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
