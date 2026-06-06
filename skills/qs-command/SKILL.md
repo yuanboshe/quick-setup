@@ -24,7 +24,7 @@ qs render [recipe-input] -o <script>
 qs run [recipe-input]
 qs last [--json]
 qs clean [--dry-run]
-qs ghx get <github-url> -o <path> [--json]
+qs ghx get <github-url> [-o <path>] [--force] [--json]
 qs ghx cat <github-url>
 qs ghx doctor [--json]
 qs serve
@@ -194,9 +194,13 @@ qs:
 
 ```sh
 qs ghx doctor
+qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh
 qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh -o file.sh
+qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh -o file.sh --force
 qs ghx cat https://raw.githubusercontent.com/owner/repo/main/file.sh
 ```
+
+`qs ghx get` 省略 `-o` 时由 GHX SDK 推导默认输出文件名，并写入当前目录；需要改名或写入其他目录时再传 `-o`。输出文件已存在时默认返回 `output_exists` 且不发起网络下载；需要明确覆盖时传 `--force`。
 
 默认缓存目录：
 

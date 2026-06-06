@@ -10,7 +10,7 @@ qs render [recipe-input] -o <script>
 qs run [recipe-input]
 qs last [--json]
 qs clean [--dry-run]
-qs ghx get <github-url> -o <path> [--json]
+qs ghx get <github-url> [-o <path>] [--force] [--json]
 qs ghx cat <github-url>
 qs ghx doctor [--json]
 qs version
@@ -151,9 +151,13 @@ qs ghx doctor --json
 手动下载或输出 GitHub 资源：
 
 ```sh
+qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh
 qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh -o file.sh
+qs ghx get https://raw.githubusercontent.com/owner/repo/main/file.sh -o file.sh --force
 qs ghx cat https://raw.githubusercontent.com/owner/repo/main/file.sh
 ```
+
+`qs ghx get` 省略 `-o` 时，由 GHX SDK 推导默认输出文件名并写入当前目录；需要改名或写入其他目录时，传 `-o <path>`。输出文件已存在时，GHX SDK 返回 `output_exists`，QS 会以错误退出，不会发起网络下载；需要明确覆盖时传 `--force`。
 
 QS 使用 GHX embedded profile，配置读取：
 
