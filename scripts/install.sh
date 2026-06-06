@@ -417,11 +417,36 @@ install_completion() {
     print_completion_next_steps "${user_completion_file}"
 }
 
+is_path_reference() {
+    local path="$1"
+    local path_win
+
+    if [ -L "${path}" ]; then
+        return 0
+    fi
+    if [ "${OS}" = "windows" ] && [ -e "${path}" ] && command -v cmd.exe >/dev/null 2>&1 && command -v cygpath >/dev/null 2>&1; then
+        path_win="$(cygpath -aw "${path}")"
+        if MSYS2_ARG_CONV_EXCL='*' cmd.exe /c fsutil reparsepoint query "${path_win}" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
 install_skill() {
     local skill_name="$1"
     local skill_url="${SKILL_BASE_URL%/}/${skill_name}/SKILL.md"
     local skill_dir="${SKILLS_DIR}/${skill_name}"
     local skill_tmp="${TMP_DIR}/${skill_name}.SKILL.md"
+
+    if is_path_reference "${skill_dir}"; then
+        echo "Keep Agent skill reference ${skill_dir}; skip managed skill update."
+        return 0
+    fi
+    if [ -e "${skill_dir}" ] && [ ! -d "${skill_dir}" ]; then
+        echo "Skip Agent skill ${skill_name}: ${skill_dir} exists and is not a directory."
+        return 0
+    fi
 
     echo "Install Agent skill ${skill_name} from ${skill_url} ..."
     if ! download_one "${skill_url}" "${skill_tmp}"; then
@@ -506,13 +531,12 @@ link_installed_skill() {
             echo "Skip Agent skill reference ${target_dir}: cannot create ${target_base}."
             continue
         }
-        if [ -L "${target_dir}" ]; then
-            rm "${target_dir}" 2>/dev/null || {
-                echo "Skip Agent skill reference ${target_dir}: cannot replace existing path."
-                continue
-            }
-        elif [ -e "${target_dir}" ]; then
-            echo "Skip Agent skill reference ${target_dir}: path already exists."
+        if is_path_reference "${target_dir}"; then
+            echo "Keep existing Agent skill reference ${target_dir}."
+            continue
+        fi
+        if [ -e "${target_dir}" ]; then
+            echo "Skip Agent skill reference ${target_dir}: non-reference path already exists."
             continue
         fi
         if [ "${OS}" = "windows" ] && command -v cmd.exe >/dev/null 2>&1 && command -v cygpath >/dev/null 2>&1; then

@@ -4,6 +4,8 @@
 
 默认安装脚本会把这些 skill 安装到 `${AGENTS_HOME:-~/.agents}/skills`，并在检测到 Codex 或 Claude 用户目录时创建引用。Windows 下会优先使用目录 junction。需要跳过时，在安装 QS 时设置 `QS_INSTALL_SKILLS=false`。
 
+升级时，`.agents` 下由安装器管理的普通 skill 目录会更新 `SKILL.md`；同名路径如果是符号链接或 Windows junction，则视为开发引用并保留。其他 Agent skill 目录中已存在的同名路径同样不会被替换。
+
 仓库入口：
 
 ```text

@@ -13,6 +13,34 @@ platform_assets() {
   done
 }
 
+skill_assets() {
+  local dir="$1"
+  mkdir -p "$dir/qs-cmd" "$dir/qs-repo"
+  printf '%s\n' 'qs-cmd published' > "$dir/qs-cmd/SKILL.md"
+  printf '%s\n' 'qs-repo published' > "$dir/qs-repo/SKILL.md"
+}
+
+run_local_install_with_skills() {
+  local tmp="$1"
+  local agents_home="$2"
+  local agent_links="$3"
+  local assets="$tmp/assets"
+  local skill_source="$tmp/skill-source"
+  local install_dir="$tmp/bin"
+
+  platform_assets "$assets"
+  skill_assets "$skill_source"
+  mkdir -p "$install_dir"
+
+  AGENTS_HOME="$agents_home" \
+    QS_AGENT_SKILL_LINKS="$agent_links" \
+    QS_RELEASE_BASE_URL="$assets" \
+    QS_SKILL_BASE_URL="file://$skill_source" \
+    QS_INSTALL_DIR="$install_dir" \
+    QS_INSTALL_COMPLETION=false \
+    bash "$INSTALL_SH" >/dev/null
+}
+
 test_local_asset_install() {
   local tmp="$1/local"
   local assets="$tmp/assets"
@@ -71,6 +99,51 @@ EOF
   grep -F 'bash "${remote_dir}/install.sh"' "$ssh_calls" >/dev/null
 }
 
+test_skill_install_updates_managed_directory() {
+  local tmp="$1/skill-update"
+  local agents_home="$tmp/agents"
+
+  mkdir -p "$agents_home/skills/qs-cmd"
+  printf '%s\n' 'qs-cmd old' > "$agents_home/skills/qs-cmd/SKILL.md"
+
+  run_local_install_with_skills "$tmp" "$agents_home" false
+
+  grep -Fx 'qs-cmd published' "$agents_home/skills/qs-cmd/SKILL.md" >/dev/null
+  grep -Fx 'qs-repo published' "$agents_home/skills/qs-repo/SKILL.md" >/dev/null
+}
+
+test_skill_install_preserves_managed_reference() {
+  local tmp="$1/skill-managed-reference"
+  local agents_home="$tmp/agents"
+  local development_skill="$tmp/development/qs-cmd"
+
+  mkdir -p "$agents_home/skills" "$development_skill"
+  printf '%s\n' 'qs-cmd development' > "$development_skill/SKILL.md"
+  ln -s "$development_skill" "$agents_home/skills/qs-cmd"
+
+  run_local_install_with_skills "$tmp" "$agents_home" false
+
+  test -L "$agents_home/skills/qs-cmd"
+  grep -Fx 'qs-cmd development' "$development_skill/SKILL.md" >/dev/null
+}
+
+test_skill_link_preserves_existing_reference() {
+  local tmp="$1/skill-agent-reference"
+  local agents_home="$tmp/agents"
+  local agent_skills="$tmp/agent-skills"
+  local development_skill="$tmp/development/qs-cmd"
+
+  mkdir -p "$agent_skills" "$development_skill"
+  printf '%s\n' 'qs-cmd development' > "$development_skill/SKILL.md"
+  ln -s "$development_skill" "$agent_skills/qs-cmd"
+
+  run_local_install_with_skills "$tmp" "$agents_home" "$agent_skills"
+
+  test -L "$agent_skills/qs-cmd"
+  grep -Fx 'qs-cmd development' "$development_skill/SKILL.md" >/dev/null
+  test -L "$agent_skills/qs-repo"
+}
+
 main() {
   bash -n "$INSTALL_SH"
 
@@ -80,6 +153,9 @@ main() {
 
   test_local_asset_install "$tmp"
   test_remote_asset_install_uploads_script "$tmp"
+  test_skill_install_updates_managed_directory "$tmp"
+  test_skill_install_preserves_managed_reference "$tmp"
+  test_skill_link_preserves_existing_reference "$tmp"
 }
 
 main "$@"

@@ -56,6 +56,8 @@ curl -fsSL https://qs.pz1.top/install.sh | QS_INSTALL_COMPLETION=false bash
 
 安装脚本默认也会安装 QS Agent skills 到 `${AGENTS_HOME:-~/.agents}/skills`，用于让 Agent 了解 QS 命令和组件库规范。检测到 Codex 或 Claude 的用户目录时，脚本会在对应 agent 的 skills 目录里创建引用；Windows 下会优先使用目录 junction。需要关闭 skill 安装时：
 
+升级时，安装脚本会覆盖 `${AGENTS_HOME:-~/.agents}/skills` 下普通同名 skill 目录中的 `SKILL.md`。如果同名路径是符号链接或 Windows junction，安装脚本会保留该引用并跳过覆盖，避免修改开发项目中的 skill。Codex、Claude 或自定义 Agent skill 目录中已经存在的同名路径也会保留；只有路径不存在时才创建指向 `.agents` 安装目录的引用。
+
 ```sh
 curl -fsSL https://qs.pz1.top/install.sh | QS_INSTALL_SKILLS=false bash
 ```
