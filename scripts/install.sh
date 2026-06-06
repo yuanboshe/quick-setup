@@ -537,8 +537,8 @@ install_skills() {
     fi
 
     detect_agent_skill_dirs
-    install_skill "qs-command"
-    link_installed_skill "qs-command"
+    install_skill "qs-cmd"
+    link_installed_skill "qs-cmd"
     install_skill "qs-repo"
     link_installed_skill "qs-repo"
 }

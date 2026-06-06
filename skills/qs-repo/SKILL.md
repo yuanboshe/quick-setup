@@ -1,11 +1,13 @@
 ---
 name: qs-repo
-description: Use when creating, modifying, reviewing, or documenting quick-setup component repositories, components, shell templates, template config.yaml files, recipe files, frameworks, template IDs, argument markers, or repo publishing/versioning guidance.
+description: Use when turning reusable software deployment, environment configuration, system initialization, or multi-step shell workflows into quick-setup component assets for future reuse. Also use when creating, modifying, reviewing, or documenting QS repos, components, templates, config.yaml files, recipes, frameworks, template IDs, arguments, or publishing/versioning guidance.
 ---
 
 # QS Repo
 
 开发 quick-setup（QS）组件库时，把 repo 视为可复用 shell 安装能力的发布单位。目标是让人类能审查脚本，让 Agent 能稳定发现、组合、解释和执行 template。
+
+当用户希望复用、标准化或沉淀一系列自动化操作时，使用本 skill 把操作意图整理为 repo/component/template/recipe。资产完成后，使用 `qs-cmd` skill 发现、组合和执行这些资产。
 
 ## 核心模型
 
@@ -200,7 +202,7 @@ qs:
   ghx: false
 ```
 
-GHX provider、Worker、自建转发服务和 token header 属于 QS 的 GHX embedded profile 配置，不写入 recipe。QS 读取 `~/.qs/config/ghx.yaml`、项目 `.qs/ghx.yaml` 和项目 `ghx.yaml`，默认启用指向 `/qs` 公共入口的自建服务和 Worker provider；独立 `ghx` CLI 的 `~/.ghx/config.yaml` 不影响 QS。
+GHX provider、Worker、自建转发服务和 token header 属于 QS 的 GHX embedded profile 配置，不写入 recipe。QS 读取 `~/.qs/config/ghx.yaml`、项目 `.qs/ghx.yaml` 和项目 `ghx.yaml`，默认启用指向 `/qs` 公共入口的自建服务和 Worker provider；GHX 会优先尝试本地缓存、GitHub 官方直连和 jsDelivr raw，失败后再转接，并通过 `~/.qs/ghx/provider-health.json` 复用短期 provider health 状态。独立 `ghx` CLI 的 `~/.ghx/config.yaml` 不影响 QS。
 
 编写 `recipe` 时，区分核心必填参数和可推理参数。核心必填参数必须写清楚；可推理参数能省略时优先省略，让 recipe 保持简单。
 

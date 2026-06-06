@@ -10,25 +10,25 @@
 https://github.com/yuanboshe/quick-setup
 ```
 
-## qs-command
+## qs-cmd
 
-用途：约束 Agent 如何调用、解释和记录 QS 命令，覆盖 `inspect`、`render`、`run`、`last`、`clean`、`qs ghx`、远程输入和 JSON 输出等场景。
+用途：当用户提出复杂软件部署、环境配置、系统初始化或多步骤 shell 操作目标时，让 Agent 优先发现并复用已有 QS template，通过简单 recipe 完成自动化任务；同时约束 Agent 如何调用、解释和记录 QS 命令。
 
 下载路径：
 
 ```text
-https://qs.pz1.top/skills/qs-command/SKILL.md
+https://qs.pz1.top/skills/qs-cmd/SKILL.md
 ```
 
 仓库路径：
 
 ```text
-skills/qs-command/SKILL.md
+skills/qs-cmd/SKILL.md
 ```
 
 ## qs-repo
 
-用途：约束 Agent 如何创建、修改、审查和说明 QS 组件库，覆盖 repo、component、template、`config.yaml`、recipe、framework、template ID、参数标记和发布维护规则。
+用途：当一系列自动化部署、环境配置或系统初始化流程需要复用时，让 Agent 将操作意图沉淀为 QS 组件资产；同时约束 Agent 如何创建、修改、审查和说明 QS 组件库。
 
 下载路径：
 

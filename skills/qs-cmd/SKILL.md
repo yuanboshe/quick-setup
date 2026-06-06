@@ -1,11 +1,13 @@
 ---
-name: qs-command
-description: "Use when invoking, documenting, or reasoning about quick-setup CLI commands, including qs inspect, qs render, qs run, qs last, direct GitHub repo/tree/file URLs, git+ inputs, JSON output, and Agent-safe execution workflows."
+name: qs-cmd
+description: "Use QS to automate complex software deployment, environment configuration, system initialization, or multi-step shell operations by discovering reusable templates, composing a simple recipe, inspecting and rendering the plan, and running it when requested. Also use when invoking, documenting, or reasoning about quick-setup CLI commands and Agent-safe execution."
 ---
 
 # QS Command
 
 使用 quick-setup（QS）命令时，把 QS 当作 shell 安装流程的组件发现器、脚本生成器和执行记录器。优先让用户和 Agent 看清楚 repo 提供哪些 template、recipe 会组合哪些 template、最终会生成什么脚本。
+
+当用户提出复杂的软件部署、环境配置、系统初始化或多步骤 shell 操作目标时，先判断是否存在可复用的 QS repo/template。存在合适 template 时，优先编写简单 recipe 进行组合和参数覆盖，而不是重新编写完整安装脚本。找不到合适资产，且该流程有复用价值时，改用 `qs-repo` skill 把流程沉淀为组件库。
 
 ## 基本流程
 
@@ -183,7 +185,7 @@ QS 内置 GHX SDK。使用 GitHub source 时，QS 会自动通过 GHX provider f
 当前工作目录下的 ghx.yaml
 ```
 
-`qs.ghx` 默认开启。开启时，生成脚本头部会注入 runtime shim，在脚本运行期间接管 GitHub URL 的常见 `curl` / `wget` 下载形态，并转为 `qs ghx get/cat`。非 GitHub URL 继续走系统原始 `curl` / `wget`。如需关闭：
+`qs.ghx` 默认开启。开启时，生成脚本头部会注入 runtime shim，在脚本运行期间接管 GitHub URL 的常见 `curl` / `wget` 下载形态，并转为 `qs ghx get/cat`。GHX 会先尝试本地缓存、GitHub 官方直连和 jsDelivr raw，失败后再使用 QS 公共入口等转接 provider；连续健康失败会写入 `~/.qs/ghx/provider-health.json` 并短期跳过对应 provider，冷却到期后自动探测恢复。非 GitHub URL 继续走系统原始 `curl` / `wget`。如需关闭：
 
 ```yaml
 qs:
@@ -201,6 +203,8 @@ qs ghx cat https://raw.githubusercontent.com/owner/repo/main/file.sh
 ```
 
 `qs ghx get` 省略 `-o` 时由 GHX SDK 推导默认输出文件名，并写入当前目录；需要改名或写入其他目录时再传 `-o`。输出文件已存在时默认返回 `output_exists` 且不发起网络下载；需要明确覆盖时传 `--force`。
+
+`qs ghx doctor --json` 会输出 provider 开关和 provider health 摘要，包括失败阈值、冷却时间、状态文件路径以及状态文件是否存在。QS 不解析 GHX 私有 health 状态文件中的具体冷却条目。
 
 默认缓存目录：
 

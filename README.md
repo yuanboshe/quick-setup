@@ -67,7 +67,7 @@ npm run test:install
 - 安装脚本真源：`scripts/install.sh`
 - 下载说明页：`docs/download/index.md`
 - 文档版本索引：`versions.json`
-- Agent skill 真源：`skills/qs-command/SKILL.md`、`skills/qs-repo/SKILL.md`
+- Agent skill 真源：`skills/qs-cmd/SKILL.md`、`skills/qs-repo/SKILL.md`
 - Agent skill 说明页：`docs/skills/index.md`
 
 `versions.json` 中的 `current` 表示当前稳定文档对应的 QS 版本。站点根路径 `/` 始终发布当前稳定文档；历史版本由发布流程从对应 `vX.Y.Z` tag 构建到 `/versions/<version>/`。该 tag 同时也是 GitHub Release 的下载锚点，不再维护 `docs-v*` 这类独立文档 tag。不要把历史版本源码拷贝到当前分支。
