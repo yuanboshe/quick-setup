@@ -182,6 +182,7 @@ remote_env_prefix() {
     local include_release_base="$1"
     local names=(
         QS_VERSION
+        QS_HOME
         QS_INSTALL_DIR
         QS_INSTALL_COMPLETION
         QS_INSTALL_SKILLS
@@ -567,6 +568,21 @@ install_skills() {
     link_installed_skill "qs-repo"
 }
 
+init_default_config() {
+    local qs_bin="${INSTALL_DIR}/${INSTALL_NAME}"
+
+    if [ ! -x "${qs_bin}" ]; then
+        echo "Skip default config init: ${qs_bin} is not executable."
+        return 0
+    fi
+    if "${qs_bin}" config init >/dev/null; then
+        echo "QS default config is ready."
+        return 0
+    fi
+    echo "Failed to initialize QS default config. Run '${qs_bin} config init' manually." >&2
+    return 1
+}
+
 run_remote_install
 detect_local_platform
 if [ -n "${QS_INSTALL_DIR:-}" ]; then
@@ -614,6 +630,7 @@ else
 fi
 
 echo "qs has been installed to ${INSTALL_DIR}/${INSTALL_NAME}"
+init_default_config
 install_completion
 install_skills
 case ":${PATH}:" in

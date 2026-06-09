@@ -48,6 +48,8 @@ curl -fsSL https://qs.pz1.top/install.sh | bash
 
 安装脚本会为下载请求设置连接超时、总超时和重试，避免 GitHub 无法访问时长时间卡住。当前脚本默认会按顺序尝试 GHX Worker `https://ghx-cache.pz1.top`、自建转发 `https://ghx.pz1.top` 和官方 GitHub。
 
+安装完成后，脚本会调用已安装的 `qs config init`，在 `${QS_HOME:-~/.qs}/config.yaml` 不存在时创建默认配置。已有配置不会被覆盖；需要把配置写到自定义目录时，在安装时设置 `QS_HOME`。
+
 安装完成后，脚本默认会安装 bash 命令补全。Linux 优先写入 `/etc/bash_completion.d/qs`，权限不足时写入用户 completion 目录；Windows Git Bash、MSYS 和 Cygwin 会写入 `~/.bash_completion.d/qs` 并更新 `~/.bashrc`。脚本会在安装完成后提示立即生效命令，通常是 `source <补全文件路径>`；打开新的 bash shell 后也会生效。需要关闭补全安装时：
 
 ```sh

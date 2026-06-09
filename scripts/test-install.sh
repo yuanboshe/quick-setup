@@ -8,7 +8,21 @@ platform_assets() {
   local dir="$1"
   mkdir -p "$dir"
   for file in qs-linux-amd64 qs-linux-arm64 qs-windows-amd64.exe; do
-    printf '#!/bin/sh\necho fake-qs\n' > "$dir/$file"
+    cat > "$dir/$file" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "${1:-}" = "config" ] && [ "${2:-}" = "init" ]; then
+  qs_home="${QS_HOME:-${HOME}/.qs}"
+  mkdir -p "${qs_home}"
+  if [ ! -f "${qs_home}/config.yaml" ]; then
+    printf '%s\n' 'registries:' '  - source: https://github.com/yuanboshe/qs-repo/blob/main/registry.yaml' > "${qs_home}/config.yaml"
+  fi
+  exit 0
+fi
+
+echo fake-qs
+EOF
     chmod +x "$dir/$file"
   done
 }
@@ -45,12 +59,14 @@ test_local_asset_install() {
   local tmp="$1/local"
   local assets="$tmp/assets"
   local install_dir="$tmp/bin"
+  local qs_home="$tmp/qs-home"
 
   platform_assets "$assets"
   mkdir -p "$install_dir"
 
   QS_RELEASE_BASE_URL="$assets" \
     QS_INSTALL_DIR="$install_dir" \
+    QS_HOME="$qs_home" \
     QS_INSTALL_COMPLETION=false \
     QS_INSTALL_SKILLS=false \
     bash "$INSTALL_SH" >/dev/null
@@ -59,6 +75,27 @@ test_local_asset_install() {
     echo "local asset install did not produce qs binary" >&2
     exit 1
   fi
+  grep -F 'github.com/yuanboshe/qs-repo/blob/main/registry.yaml' "$qs_home/config.yaml" >/dev/null
+}
+
+test_local_asset_install_preserves_existing_config() {
+  local tmp="$1/local-existing-config"
+  local assets="$tmp/assets"
+  local install_dir="$tmp/bin"
+  local qs_home="$tmp/qs-home"
+
+  platform_assets "$assets"
+  mkdir -p "$install_dir" "$qs_home"
+  printf '%s\n' 'registries: []' > "$qs_home/config.yaml"
+
+  QS_RELEASE_BASE_URL="$assets" \
+    QS_INSTALL_DIR="$install_dir" \
+    QS_HOME="$qs_home" \
+    QS_INSTALL_COMPLETION=false \
+    QS_INSTALL_SKILLS=false \
+    bash "$INSTALL_SH" >/dev/null
+
+  grep -Fx 'registries: []' "$qs_home/config.yaml" >/dev/null
 }
 
 test_remote_asset_install_uploads_script() {
@@ -152,6 +189,7 @@ main() {
   trap "rm -rf '$tmp'" EXIT
 
   test_local_asset_install "$tmp"
+  test_local_asset_install_preserves_existing_config "$tmp"
   test_remote_asset_install_uploads_script "$tmp"
   test_skill_install_updates_managed_directory "$tmp"
   test_skill_install_preserves_managed_reference "$tmp"
